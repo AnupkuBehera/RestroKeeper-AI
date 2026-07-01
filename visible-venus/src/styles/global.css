@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* RestoKeeper AI Color Palette (Dark Mode Base) */
+  --color-charcoal-950: #09090b;
+  --color-charcoal-900: #121212; /* Dark charcoal main canvas */
+  --color-charcoal-800: #18181b; /* Secondary surface / Card background */
+  --color-charcoal-700: #27272a; /* Borders and dividers */
+  --color-charcoal-600: #3f3f46; /* Inactive tabs / Muted states */
+  --color-charcoal-400: #a1a1aa; /* Muted text / Labels */
+  --color-charcoal-200: #e4e4e7; /* Secondary body / Text */
+  --color-charcoal-50: #f4f4f5;  /* High contrast white text */
+
+  /* Accents */
+  --color-emerald-500: #10b981; /* Emerald green (Positive Action / Success) */
+  --color-emerald-600: #059669; /* Hover positive */
+  --color-emerald-950: #064e3b; /* Emerald background glow */
+  
+  --color-amber-500: #f5a623;   /* Amber warning (Deficit / Pending) */
+  --color-amber-600: #d97706;   /* Amber warning hover */
+  --color-amber-950: #451a03;   /* Amber background glow */
+
+  --color-rose-500: #ef4444;    /* Rose (Error / Delete) */
+  --color-rose-600: #dc2626;
+
+  /* Custom animations */
+  --animate-mic-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Custom Utilities and Reset Base */
+@layer base {
+  html, body {
+    background-color: var(--color-charcoal-900);
+    color: var(--color-charcoal-50);
+    font-family: var(--font-sans);
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom scrollbar for premium feel */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-charcoal-900);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-charcoal-700);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-charcoal-600);
+  }
+}
+
+/* Custom micro-animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  50% {
+    opacity: .8;
+    transform: scale(1.05);
+    box-shadow: 0 0 0 12px rgba(16, 185, 129, 0);
+  }
+}

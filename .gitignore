@@ -1,0 +1,39 @@
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+restokeeper.db
+
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+
+# Build & Astro output
+dist/
+.astro/
+.vercel/
+
+# Logs
+*.log
+logs/
+
+# OS/IDE settings
+.DS_Store
+.vscode/
+.idea/
+.project
+.settings/
