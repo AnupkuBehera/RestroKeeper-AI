@@ -553,7 +553,7 @@ import Layout from '../layouts/Layout.astro';
       const text = document.getElementById('backend-text');
       
       try {
-        const res = await fetch(BACKEND_BASE_URL + '/');
+        const res = await fetch(BACKEND_BASE_URL + '/api/health');
         if (res.ok) {
           isBackendOnline = true;
           dot.className = 'h-2 w-2 rounded-full bg-emerald-500';

@@ -11,7 +11,10 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
     # Fallback to SQLite for zero-config local execution
-    DATABASE_URL = "sqlite:///./restokeeper.db"
+    if os.getenv("VERCEL") == "1" or os.getenv("NOW_BUILDER") == "1":
+        DATABASE_URL = "sqlite:////tmp/restokeeper.db"
+    else:
+        DATABASE_URL = "sqlite:///./restokeeper.db"
     engine = create_engine(
         DATABASE_URL, connect_args={"check_same_thread": False}
     )

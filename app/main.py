@@ -148,6 +148,7 @@ finally:
 
 
 @app.get("/")
+@app.get("/api/health")
 def read_root():
     return {
         "status": "online",
@@ -430,3 +431,22 @@ def reset_ingredient_stocks(tenant_id: int = Depends(get_current_tenant_id), db:
     except Exception as e:
         logger.error(f"Reset stock levels failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# Duplicate /api routes to support Vercel serverless prefix stripping
+for route in list(app.router.routes):
+    if hasattr(route, "path") and route.path.startswith("/api/"):
+        new_path = route.path[4:]  # Strips '/api', resulting in '/...'
+        if not any(r.path == new_path for r in app.router.routes):
+            app.router.add_api_route(
+                new_path,
+                route.endpoint,
+                methods=route.methods,
+                response_model=getattr(route, "response_model", None),
+                dependencies=getattr(route, "dependencies", []),
+                summary=getattr(route, "summary", None),
+                description=getattr(route, "description", None),
+                response_description=getattr(route, "response_description", "Successful Response"),
+                tags=getattr(route, "tags", None),
+                deprecated=getattr(route, "deprecated", False),
+            )
+
