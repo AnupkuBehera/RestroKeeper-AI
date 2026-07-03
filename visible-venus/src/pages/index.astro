@@ -120,26 +120,60 @@ import Layout from '../layouts/Layout.astro';
   <!-- Main Container -->
   <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
 
-    <!-- Nav tabs -->
-    <div class="flex border-b border-charcoal-700 gap-2 font-mono text-xs overflow-x-auto pb-px" id="nav-tabs">
-      <button class="tab-btn active-tab px-4 py-2.5 rounded-t-lg bg-charcoal-800 text-emerald-500 border-t border-x border-charcoal-700 font-bold transition-all" data-tab="tab-stock">
-        📦 Stock Control
-      </button>
-      <button class="tab-btn px-4 py-2.5 rounded-t-lg text-charcoal-400 hover:text-charcoal-100 transition-all" data-tab="tab-recipes">
-        📜 Menu Recipes & POS
-      </button>
-      <button class="tab-btn px-4 py-2.5 rounded-t-lg text-charcoal-400 hover:text-charcoal-100 transition-all" data-tab="tab-batches">
-        ⏳ Batches & Wastage
-      </button>
+     <!-- Executive KPI Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="kpi-cards">
+      <!-- Card 1: Total SKUs -->
+      <div class="bg-charcoal-800/60 border border-charcoal-700/60 rounded-2xl p-5 flex items-center justify-between shadow-lg">
+        <div>
+          <span class="text-[10px] font-mono text-charcoal-400 uppercase tracking-wider block">Total SKUs</span>
+          <span id="kpi-total-skus" class="text-2xl font-bold text-charcoal-50 mt-1 block">0</span>
+        </div>
+        <div class="h-10 w-10 rounded-xl bg-charcoal-900 border border-charcoal-700/80 flex items-center justify-center text-emerald-500 font-bold text-lg">
+          📦
+        </div>
+      </div>
+
+      <!-- Card 2: Low Stock warnings -->
+      <div id="kpi-card-low-stock" class="bg-charcoal-800/60 border border-charcoal-700/60 rounded-2xl p-5 flex items-center justify-between shadow-lg transition-all">
+        <div>
+          <span class="text-[10px] font-mono text-charcoal-400 uppercase tracking-wider block">Low Stock Alerts</span>
+          <span id="kpi-low-stock" class="text-2xl font-bold text-emerald-500 mt-1 block">0</span>
+        </div>
+        <div id="kpi-icon-low-stock" class="h-10 w-10 rounded-xl bg-charcoal-900 border border-charcoal-700/80 flex items-center justify-center text-emerald-500 font-bold text-lg">
+          ✅
+        </div>
+      </div>
+
+      <!-- Card 3: Expiring Batches -->
+      <div id="kpi-card-expiring" class="bg-charcoal-800/60 border border-charcoal-700/60 rounded-2xl p-5 flex items-center justify-between shadow-lg">
+        <div>
+          <span class="text-[10px] font-mono text-charcoal-400 uppercase tracking-wider block">Expiring Batches</span>
+          <span id="kpi-expiring" class="text-2xl font-bold text-charcoal-50 mt-1 block">0</span>
+        </div>
+        <div id="kpi-icon-expiring" class="h-10 w-10 rounded-xl bg-charcoal-900 border border-charcoal-700/80 flex items-center justify-center text-charcoal-400 font-bold text-lg">
+          ⏳
+        </div>
+      </div>
+
+      <!-- Card 4: Sheets Sync status -->
+      <div class="bg-charcoal-800/60 border border-charcoal-700/60 rounded-2xl p-5 flex items-center justify-between shadow-lg">
+        <div>
+          <span class="text-[10px] font-mono text-charcoal-400 uppercase tracking-wider block">Google Sheets Sync</span>
+          <span id="kpi-sheets-status" class="text-xs font-bold text-amber-500 mt-2 block font-mono">Sandbox Mode</span>
+        </div>
+        <div class="h-10 w-10 rounded-xl bg-charcoal-900 border border-charcoal-700/80 flex items-center justify-center text-lg">
+          📊
+        </div>
+      </div>
     </div>
 
     <!-- TAB 1: STOCK CONTROL SECTION -->
     <div id="tab-stock" class="tab-content grid grid-cols-1 lg:grid-cols-12 gap-6">
       
-      <!-- Left Column: Spoken / Typed Counts -->
-      <section class="lg:col-span-5 space-y-6">
+      <!-- Main Column: Stock Inventory Table -->
+      <section class="lg:col-span-7 xl:col-span-8 space-y-6">
         <!-- Low Stock warning Alerts Box -->
-        <div id="restock-alerts-container" class="hidden rounded-xl border border-rose-500/30 bg-rose-950/15 p-4 shadow-md">
+        <div id="restock-alerts-container" class="hidden rounded-xl border border-rose-500/30 bg-rose-955/15 p-4 shadow-md">
           <div class="flex items-start gap-3">
             <span class="text-rose-500 flex-shrink-0 animate-pulse text-lg">⚠️</span>
             <div class="flex-1">
@@ -152,13 +186,61 @@ import Layout from '../layouts/Layout.astro';
         </div>
 
         <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
+          <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-base font-semibold text-charcoal-50">Master Ingredient Inventory</h2>
+              <p class="text-xs text-charcoal-400 mt-0.5">Directly edit quantities in the table to synchronize instantly</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="demo-reset-btn-v1" class="rounded-md border border-charcoal-700 hover:border-charcoal-600 bg-charcoal-900 px-3 py-1.5 text-xs text-charcoal-200 transition-all">
+                Reset Stock levels
+              </button>
+              <button id="clear-stocks-btn" class="rounded-md border border-rose-500/30 hover:bg-rose-950/20 bg-charcoal-900 px-3 py-1.5 text-xs text-rose-500 font-medium transition-all" title="Clear all stock levels to 0.0 for fresh count">
+                🗑️ Clear Stocks
+              </button>
+            </div>
+          </div>
+
+          <!-- Category Filter Tabs -->
+          <div class="px-4 py-2 border-b border-charcoal-700 bg-charcoal-900/20 flex flex-wrap gap-2 items-center" id="category-filters">
+            <span class="text-[10px] font-mono text-charcoal-400 uppercase tracking-wider select-none mr-2">Categories:</span>
+            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-emerald-500 text-charcoal-950 border border-emerald-500" data-category="All">All</button>
+            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-charcoal-900 text-charcoal-350 border border-charcoal-700 hover:border-charcoal-600 transition-all" data-category="Vegetables">Vegetables</button>
+            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-charcoal-900 text-charcoal-350 border border-charcoal-700 hover:border-charcoal-600 transition-all" data-category="Fruits">Fruits</button>
+            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-charcoal-900 text-charcoal-350 border border-charcoal-700 hover:border-charcoal-600 transition-all" data-category="Dairy">Dairy</button>
+            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-charcoal-900 text-charcoal-350 border border-charcoal-700 hover:border-charcoal-600 transition-all" data-category="Dry Ration">Dry Ration</button>
+            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-charcoal-900 text-charcoal-350 border border-charcoal-700 hover:border-charcoal-600 transition-all" data-category="Other">Other</button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-left text-xs font-mono">
+              <thead>
+                <tr class="border-b border-charcoal-700 bg-charcoal-900/40 text-charcoal-400 text-[10px] tracking-wider uppercase">
+                  <th class="p-4 font-semibold">SKU / Item</th>
+                  <th class="p-4 font-semibold text-center">Current Stock</th>
+                  <th class="p-4 font-semibold text-center">Par Level</th>
+                  <th class="p-4 font-semibold">Cost & Supplier</th>
+                  <th class="p-4 font-semibold text-center">Status</th>
+                  <th class="p-4 font-semibold text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody id="inventory-table-tbody" class="divide-y divide-charcoal-700/50">
+                <!-- Dynamically populated inventory rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Action Column: Spoken / Typed Counts & Add Custom SKU -->
+      <section class="lg:col-span-5 xl:col-span-4 space-y-6">
+        <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
           <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4">
             <h2 class="text-base font-semibold text-charcoal-50">Voice & Type Auditor</h2>
             <p class="text-xs text-charcoal-400 mt-0.5">Quick update quantities by speaking or typing</p>
           </div>
 
           <div class="p-6 flex flex-col items-center">
-            
             <!-- Speech Recognition Mic Button -->
             <div class="relative my-4 flex flex-col items-center justify-center">
               <button id="mic-record-btn" class="h-28 w-28 rounded-full bg-charcoal-700 border-4 border-charcoal-600 flex items-center justify-center text-charcoal-50 hover:text-emerald-500 transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer z-10">
@@ -269,99 +351,13 @@ import Layout from '../layouts/Layout.astro';
           </div>
         </div>
       </section>
-
-      <!-- Right Column: Stock Inventory Table -->
-      <section class="lg:col-span-7">
-        <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
-          <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h2 class="text-base font-semibold text-charcoal-50">Master Ingredient Inventory</h2>
-              <p class="text-xs text-charcoal-400 mt-0.5">Directly edit quantities in the table to synchronize instantly</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <button id="demo-reset-btn-v1" class="rounded-md border border-charcoal-700 hover:border-charcoal-600 bg-charcoal-900 px-3 py-1.5 text-xs text-charcoal-200 transition-all">
-                Reset Stock levels
-              </button>
-              <button id="clear-stocks-btn" class="rounded-md border border-rose-500/30 hover:bg-rose-950/20 bg-charcoal-900 px-3 py-1.5 text-xs text-rose-500 font-medium transition-all" title="Clear all stock levels to 0.0 for fresh count">
-                🗑️ Clear Stocks
-              </button>
-            </div>
-          </div>
-
-          <!-- Category Filter Tabs -->
-          <div class="px-4 py-2 border-b border-charcoal-700 bg-charcoal-900/20 flex flex-wrap gap-2 items-center" id="category-filters">
-            <span class="text-[10px] font-mono text-charcoal-400 uppercase tracking-wider select-none mr-2">Categories:</span>
-            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-emerald-500 text-charcoal-950 border border-emerald-500" data-category="All">All</button>
-            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-charcoal-900 text-charcoal-350 border border-charcoal-700 hover:border-charcoal-600 transition-all" data-category="Vegetables">Vegetables</button>
-            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-charcoal-900 text-charcoal-350 border border-charcoal-700 hover:border-charcoal-600 transition-all" data-category="Fruits">Fruits</button>
-            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-charcoal-900 text-charcoal-350 border border-charcoal-700 hover:border-charcoal-600 transition-all" data-category="Dairy">Dairy</button>
-            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-charcoal-900 text-charcoal-350 border border-charcoal-700 hover:border-charcoal-600 transition-all" data-category="Dry Ration">Dry Ration</button>
-            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-charcoal-900 text-charcoal-350 border border-charcoal-700 hover:border-charcoal-600 transition-all" data-category="Other">Other</button>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="w-full border-collapse text-left text-xs font-mono">
-              <thead>
-                <tr class="border-b border-charcoal-700 bg-charcoal-900/40 text-charcoal-400 text-[10px] tracking-wider uppercase">
-                  <th class="p-4 font-semibold">SKU / Item</th>
-                  <th class="p-4 font-semibold text-center">Current Stock</th>
-                  <th class="p-4 font-semibold text-center">Par Level</th>
-                  <th class="p-4 font-semibold">Cost & Supplier</th>
-                  <th class="p-4 font-semibold text-center">Status</th>
-                  <th class="p-4 font-semibold text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody id="inventory-table-tbody" class="divide-y divide-charcoal-700/50">
-                <!-- Dynamically populated inventory rows -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
     </div>
 
     <!-- TAB 2: MENU RECIPES & POS SIMULATION SECTION -->
     <div id="tab-recipes" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
       
-      <!-- Left Column: Add Menu Item / Recipe Mapping Form -->
-      <section class="lg:col-span-5 space-y-6">
-        <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
-          <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4">
-            <h2 class="text-base font-semibold text-charcoal-50">Create Menu Item & Recipe</h2>
-            <p class="text-xs text-charcoal-400 mt-0.5">Map selling items to raw ingredients</p>
-          </div>
-
-          <form id="create-menu-form" class="p-6 space-y-4">
-            <div>
-              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Menu Item Name</label>
-              <input type="text" id="menu-name" required placeholder="e.g. Roti, Dal Fry" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none" />
-            </div>
-            <div>
-              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Selling Price ($)</label>
-              <input type="number" step="0.01" id="menu-price" required placeholder="e.g. 5.50" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none" />
-            </div>
-
-            <!-- Dynamic Recipe Ingredients lines -->
-            <div class="space-y-2">
-              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider">Recipe Ingredients</label>
-              <div id="recipe-ingredients-list" class="space-y-2">
-                <!-- Row template will append here -->
-              </div>
-              <button type="button" id="add-recipe-row-btn" class="w-full rounded border border-charcoal-700 bg-charcoal-900 text-charcoal-200 hover:text-emerald-500 py-1.5 text-xs font-mono transition-all">
-                ➕ Add Ingredient Requirement
-              </button>
-            </div>
-
-            <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-charcoal-950 font-bold text-xs py-2.5 rounded-lg transition-all shadow-md">
-              Save Menu Item Recipe
-            </button>
-          </form>
-        </div>
-      </section>
-
-      <!-- Right Column: Menu Items & POS Simulator -->
-      <section class="lg:col-span-7 space-y-6">
+      <!-- Main Column: Menu Items & POS Simulator -->
+      <section class="lg:col-span-7 xl:col-span-8 space-y-6">
         
         <!-- POS Sales Simulator -->
         <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden p-6 space-y-4">
@@ -411,14 +407,85 @@ import Layout from '../layouts/Layout.astro';
         </div>
 
       </section>
+
+      <!-- Action Column: Add Menu Item / Recipe Mapping Form -->
+      <section class="lg:col-span-5 xl:col-span-4 space-y-6">
+        <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
+          <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4">
+            <h2 class="text-base font-semibold text-charcoal-50">Create Menu Item & Recipe</h2>
+            <p class="text-xs text-charcoal-400 mt-0.5">Map selling items to raw ingredients</p>
+          </div>
+
+          <form id="create-menu-form" class="p-6 space-y-4">
+            <div>
+              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Menu Item Name</label>
+              <input type="text" id="menu-name" required placeholder="e.g. Roti, Dal Fry" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Selling Price ($)</label>
+              <input type="number" step="0.01" id="menu-price" required placeholder="e.g. 5.50" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none" />
+            </div>
+
+            <!-- Dynamic Recipe Ingredients lines -->
+            <div class="space-y-2">
+              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider">Recipe Ingredients</label>
+              <div id="recipe-ingredients-list" class="space-y-2">
+                <!-- Row template will append here -->
+              </div>
+              <button type="button" id="add-recipe-row-btn" class="w-full rounded border border-charcoal-700 bg-charcoal-900 text-charcoal-200 hover:text-emerald-500 py-1.5 text-xs font-mono transition-all">
+                ➕ Add Ingredient Requirement
+              </button>
+            </div>
+
+            <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-charcoal-950 font-bold text-xs py-2.5 rounded-lg transition-all shadow-md">
+              Save Menu Item Recipe
+            </button>
+          </form>
+        </div>
+      </section>
     </div>
 
     <!-- TAB 3: BATCHES, WASTAGE, & EXPIRY ALERTS -->
     <div id="tab-batches" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
       
-      <!-- Left Column: Log Batch / Log Wastage Forms -->
-      <section class="lg:col-span-5 space-y-6">
-        
+      <!-- Main Column: Expiry Alerts and Batches Table -->
+      <section class="lg:col-span-7 xl:col-span-8 space-y-6">
+        <!-- Expiry Alerts panel -->
+        <div id="expiry-alerts-card" class="hidden bg-charcoal-800 border border-amber-500/30 rounded-2xl shadow-xl overflow-hidden p-6 space-y-3">
+          <div class="flex items-center gap-2 text-amber-500 font-mono font-bold text-xs">
+            <span>⏳ EXPIRING BATCH ALERTS (Next 7 Days)</span>
+          </div>
+          <ul id="expiry-alerts-list" class="space-y-1.5 text-xs font-mono">
+            <!-- Expiring lists -->
+          </ul>
+        </div>
+
+        <!-- Stock batches list Table -->
+        <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
+          <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4">
+            <h2 class="text-base font-semibold text-charcoal-50">Active Ingredient Batches</h2>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-left text-xs font-mono">
+              <thead>
+                <tr class="border-b border-charcoal-700 bg-charcoal-900/40 text-charcoal-400 text-[10px] tracking-wider uppercase">
+                  <th class="p-4 font-semibold">Ingredient</th>
+                  <th class="p-4 font-semibold text-center">Batch Quantity</th>
+                  <th class="p-4 font-semibold text-center">Received Date</th>
+                  <th class="p-4 font-semibold text-center">Expiry Date</th>
+                </tr>
+              </thead>
+              <tbody id="batches-table-tbody" class="divide-y divide-charcoal-700/50">
+                <!-- Dynamically populated batch rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Action Column: Log Batch / Log Wastage Forms -->
+      <section class="lg:col-span-5 xl:col-span-4 space-y-6">
         <!-- Log New Stock Batch -->
         <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
           <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4">
@@ -478,46 +545,8 @@ import Layout from '../layouts/Layout.astro';
             </button>
           </form>
         </div>
-
       </section>
 
-      <!-- Right Column: Expiry Alerts and Batches Table -->
-      <section class="lg:col-span-7 space-y-6">
-        
-        <!-- Expiry Alerts panel -->
-        <div id="expiry-alerts-card" class="hidden bg-charcoal-800 border border-amber-500/30 rounded-2xl shadow-xl overflow-hidden p-6 space-y-3">
-          <div class="flex items-center gap-2 text-amber-500 font-mono font-bold text-xs">
-            <span>⏳ EXPIRING BATCH ALERTS (Next 7 Days)</span>
-          </div>
-          <ul id="expiry-alerts-list" class="space-y-1.5 text-xs font-mono">
-            <!-- Expiring lists -->
-          </ul>
-        </div>
-
-        <!-- Stock batches list Table -->
-        <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
-          <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4">
-            <h2 class="text-base font-semibold text-charcoal-50">Active Ingredient Batches</h2>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="w-full border-collapse text-left text-xs font-mono">
-              <thead>
-                <tr class="border-b border-charcoal-700 bg-charcoal-900/40 text-charcoal-400 text-[10px] tracking-wider uppercase">
-                  <th class="p-4 font-semibold">Ingredient</th>
-                  <th class="p-4 font-semibold text-center">Batch Quantity</th>
-                  <th class="p-4 font-semibold text-center">Received Date</th>
-                  <th class="p-4 font-semibold text-center">Expiry Date</th>
-                </tr>
-              </thead>
-              <tbody id="batches-table-tbody" class="divide-y divide-charcoal-700/50">
-                <!-- Dynamically populated batch rows -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </section>
     </div>
 
   </main>
@@ -658,12 +687,17 @@ import Layout from '../layouts/Layout.astro';
       const drawerStatus = document.getElementById('sheets-drawer-status');
       const emailDisplay = document.getElementById('sheets-email-display');
       const linkUrl = document.getElementById('sheets-link-url');
+      const sheetsKPI = document.getElementById('kpi-sheets-status');
 
       if (!isBackendOnline) {
         badge.innerText = 'Sheets: Sandbox';
         badge.className = 'text-charcoal-400 font-mono text-[11px]';
         drawerStatus.innerText = 'Sandbox Simulation (Offline Cache)';
         drawerStatus.className = 'text-amber-500 font-semibold font-mono';
+        if (sheetsKPI) {
+          sheetsKPI.innerText = 'Sandbox Mode';
+          sheetsKPI.className = 'text-xs font-bold text-amber-500 mt-2 block font-mono';
+        }
         return;
       }
 
@@ -679,6 +713,10 @@ import Layout from '../layouts/Layout.astro';
             drawerStatus.innerText = 'Sandbox Simulation (Offline Cache)';
             drawerStatus.className = 'text-amber-500 font-semibold';
             linkUrl.classList.add('hidden');
+            if (sheetsKPI) {
+              sheetsKPI.innerText = 'Sandbox Mode';
+              sheetsKPI.className = 'text-xs font-bold text-amber-500 mt-2 block font-mono';
+            }
           } else {
             badge.innerText = 'Sheets: Linked';
             badge.className = 'text-emerald-500 font-mono text-[11px]';
@@ -688,6 +726,10 @@ import Layout from '../layouts/Layout.astro';
             emailDisplay.innerText = config.share_email;
             linkUrl.href = `https://docs.google.com/spreadsheets/d/${config.sheet_id}`;
             linkUrl.classList.remove('hidden');
+            if (sheetsKPI) {
+              sheetsKPI.innerText = 'Linked & Synced';
+              sheetsKPI.className = 'text-xs font-bold text-emerald-500 mt-2 block font-mono';
+            }
           }
         }
       } catch (e) {
@@ -819,6 +861,29 @@ import Layout from '../layouts/Layout.astro';
           </tr>
         `;
       });
+      
+      // Update KPI summary cards
+      document.getElementById('kpi-total-skus').innerText = localIngredients.length;
+      document.getElementById('kpi-low-stock').innerText = lowStockItemsCount;
+      
+      const lowCard = document.getElementById('kpi-card-low-stock');
+      const lowIcon = document.getElementById('kpi-icon-low-stock');
+      const lowLabel = document.getElementById('kpi-low-stock');
+      if (lowStockItemsCount > 0) {
+        if (lowCard) lowCard.className = "bg-charcoal-800/60 border border-rose-500/30 rounded-2xl p-5 flex items-center justify-between shadow-lg transition-all bg-rose-955/5";
+        if (lowIcon) {
+          lowIcon.className = "h-10 w-10 rounded-xl bg-charcoal-900 border border-rose-500/20 flex items-center justify-center text-rose-500 font-bold text-lg animate-pulse";
+          lowIcon.innerText = "⚠️";
+        }
+        if (lowLabel) lowLabel.className = "text-2xl font-bold text-rose-500 mt-1 block";
+      } else {
+        if (lowCard) lowCard.className = "bg-charcoal-800/60 border border-charcoal-700/60 rounded-2xl p-5 flex items-center justify-between shadow-lg transition-all";
+        if (lowIcon) {
+          lowIcon.className = "h-10 w-10 rounded-xl bg-charcoal-900 border border-charcoal-700/80 flex items-center justify-center text-emerald-500 font-bold text-lg";
+          lowIcon.innerText = "✅";
+        }
+        if (lowLabel) lowLabel.className = "text-2xl font-bold text-emerald-500 mt-1 block";
+      }
 
       if (lowStockItemsCount > 0) {
         alertsContainer.classList.remove('hidden');
@@ -1104,11 +1169,15 @@ import Layout from '../layouts/Layout.astro';
     async function fetchExpiryAlerts() {
       const card = document.getElementById('expiry-alerts-card');
       const list = document.getElementById('expiry-alerts-list');
+      const expiringKPI = document.getElementById('kpi-expiring');
+      const expiringKPICard = document.getElementById('kpi-card-expiring');
+      const expiringKPIIcon = document.getElementById('kpi-icon-expiring');
       
       list.innerHTML = '';
 
       if (!isBackendOnline) {
         card.classList.add('hidden');
+        if (expiringKPI) expiringKPI.innerText = '0';
         return;
       }
 
@@ -1118,6 +1187,22 @@ import Layout from '../layouts/Layout.astro';
         });
         if (res.ok) {
           const alerts = await res.json();
+          if (expiringKPI) expiringKPI.innerText = alerts.length;
+          
+          if (expiringKPICard && expiringKPIIcon) {
+            if (alerts.length > 0) {
+              expiringKPICard.className = "bg-charcoal-800/60 border border-amber-500/30 rounded-2xl p-5 flex items-center justify-between shadow-lg bg-amber-955/5";
+              expiringKPIIcon.className = "h-10 w-10 rounded-xl bg-charcoal-900 border border-amber-500/20 flex items-center justify-center text-amber-500 font-bold text-lg animate-pulse";
+              expiringKPIIcon.innerText = "⏳";
+              expiringKPI.className = "text-2xl font-bold text-amber-500 mt-1 block";
+            } else {
+              expiringKPICard.className = "bg-charcoal-800/60 border border-charcoal-700/60 rounded-2xl p-5 flex items-center justify-between shadow-lg";
+              expiringKPIIcon.className = "h-10 w-10 rounded-xl bg-charcoal-900 border border-charcoal-700/80 flex items-center justify-center text-charcoal-400 font-bold text-lg";
+              expiringKPIIcon.innerText = "⏳";
+              expiringKPI.className = "text-2xl font-bold text-charcoal-50 mt-1 block";
+            }
+          }
+
           if (alerts.length > 0) {
             card.classList.remove('hidden');
             alerts.forEach(batch => {
