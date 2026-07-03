@@ -3,6 +3,64 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout>
+  <!-- Authentication Overlay (Modal) -->
+  <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-charcoal-950/80 backdrop-blur-md hidden">
+    <div class="w-full max-w-md bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-2xl p-6 space-y-6">
+      
+      <!-- Logo inside modal -->
+      <div class="flex items-center gap-3 justify-center mb-2">
+        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500 text-charcoal-950 font-bold tracking-tight">
+          RK
+        </div>
+        <span class="text-lg font-semibold tracking-tight text-charcoal-50">RestoKeeper <span class="text-emerald-500 font-bold">AI</span></span>
+      </div>
+
+      <!-- Tab selection (Login vs Signup) -->
+      <div class="flex border-b border-charcoal-700 pb-2 gap-4 text-sm font-mono justify-center">
+        <button id="auth-login-tab" class="text-emerald-500 font-bold border-b-2 border-emerald-500 pb-1">Log In</button>
+        <button id="auth-signup-tab" class="text-charcoal-400 hover:text-charcoal-100 pb-1">Create Account</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" class="space-y-4">
+        <div>
+          <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Email Address</label>
+          <input type="email" id="login-email" required placeholder="manager@bistro.com" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2.5 text-xs text-charcoal-50 focus:outline-none focus:border-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Password</label>
+          <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2.5 text-xs text-charcoal-50 focus:outline-none focus:border-emerald-500" />
+        </div>
+        <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-charcoal-950 font-bold text-xs py-3 rounded-xl transition-all shadow-md">
+          Authenticate Manager
+        </button>
+      </form>
+
+      <!-- Signup Form -->
+      <form id="signup-form" class="space-y-4 hidden">
+        <div>
+          <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Restaurant Name</label>
+          <input type="text" id="signup-restaurant" required placeholder="RestoKeeper Bistro" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2.5 text-xs text-charcoal-50 focus:outline-none focus:border-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Manager Name</label>
+          <input type="text" id="signup-name" required placeholder="Chef John Doe" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2.5 text-xs text-charcoal-50 focus:outline-none focus:border-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Email Address</label>
+          <input type="email" id="signup-email" required placeholder="chef@bistro.com" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2.5 text-xs text-charcoal-50 focus:outline-none focus:border-emerald-500" />
+        </div>
+        <div>
+          <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Password</label>
+          <input type="password" id="signup-password" required placeholder="Min 6 characters" minlength="6" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2.5 text-xs text-charcoal-50 focus:outline-none focus:border-emerald-500" />
+        </div>
+        <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-charcoal-950 font-bold text-xs py-3 rounded-xl transition-all shadow-md">
+          Establish Tenant Profile
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- Header Navbar -->
   <header class="sticky top-0 z-40 border-b border-charcoal-700 bg-charcoal-900/85 backdrop-blur-md">
     <div class="mx-auto flex max-w-7xl h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -13,30 +71,24 @@ import Layout from '../layouts/Layout.astro';
         </div>
         <div>
           <span class="text-lg font-semibold tracking-tight text-charcoal-50">RestoKeeper <span class="text-emerald-500 font-bold">AI</span></span>
-          <span class="block text-[10px] text-charcoal-400 font-mono tracking-wider uppercase">Restaurant Inventory Manager</span>
+          <span class="block text-[10px] text-charcoal-400 font-mono tracking-wider uppercase" id="nav-subtitle">SaaS Inventory Platform</span>
         </div>
       </div>
 
       <!-- Server & Sheets Status Badge -->
       <div class="flex items-center gap-3">
-        <!-- Backend API Status -->
         <div id="backend-status" class="flex items-center gap-1.5 rounded-full border border-charcoal-700 bg-charcoal-800 px-3 py-1 text-xs">
           <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse" id="backend-dot"></span>
           <span class="text-charcoal-400 font-mono text-[11px]" id="backend-text">Checking API...</span>
         </div>
-        <!-- Google Sheets Sync Status -->
-        <div id="sheets-status" class="flex items-center gap-1.5 rounded-full border border-charcoal-700 bg-charcoal-800 px-3 py-1 text-xs cursor-pointer hover:border-charcoal-600 transition-all" title="Click to view Sheets details">
+        <div id="sheets-status" class="flex items-center gap-1.5 rounded-full border border-charcoal-700 bg-charcoal-800 px-3 py-1 text-xs cursor-pointer hover:border-charcoal-600 transition-all">
           <svg class="h-3.5 w-3.5 text-charcoal-400" id="sheets-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           <span class="text-charcoal-400 font-mono text-[11px]" id="sheets-text">Sheets: Sandbox</span>
         </div>
-        <!-- Reset Database Button -->
-        <button id="demo-reset-btn" class="flex items-center gap-1.5 rounded-md border border-charcoal-700 hover:border-charcoal-600 bg-charcoal-900 px-3 py-1.5 text-xs text-charcoal-200 hover:text-charcoal-50 font-medium transition-all" title="Reset stocks to default metrics">
-          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3m-3-3v12" />
-          </svg>
-          Reset Demo
+        <button id="logout-btn" class="hidden rounded-md border border-charcoal-700 hover:border-charcoal-600 bg-charcoal-900 px-3 py-1.5 text-xs text-rose-500 hover:text-rose-400 font-medium transition-all">
+          Log Out
         </button>
       </div>
     </div>
@@ -53,20 +105,11 @@ import Layout from '../layouts/Layout.astro';
         <button id="close-sheets-drawer" class="text-charcoal-400 hover:text-charcoal-200 cursor-pointer">✕ Close</button>
       </div>
       <p>
-        1. Open your target Google Sheet and share it with edit access to this Service Account:
-        <br />
+        1. Share your Google Sheet with edit access to this Service Account email:
         <code class="bg-charcoal-900 text-emerald-400 px-2 py-1 rounded block mt-1 select-all select-text font-semibold font-mono" id="sheets-email-display">gcp-service-account@not-configured.iam.gserviceaccount.com</code>
       </p>
-      <p>
-        2. Set these environment variables in your backend <code class="bg-charcoal-900 text-charcoal-100 px-1 rounded select-all font-mono">.env</code> configuration:
-        <code class="bg-charcoal-900 text-charcoal-400 p-2 rounded block mt-1 leading-relaxed font-mono">
-          GOOGLE_SHEET_ID=your_google_sheet_id_here
-          <br />
-          GOOGLE_SHEETS_CREDENTIALS_JSON=paste_service_account_json_content_here
-        </code>
-      </p>
       <div class="pt-2 border-t border-charcoal-700/50 flex items-center justify-between">
-        <span>Spreadsheet status: <strong id="sheets-drawer-status" class="text-amber-500 font-semibold font-mono">Sandbox Simulation (Offline Cache)</strong></span>
+        <span>Spreadsheet: <strong id="sheets-drawer-status" class="text-amber-500 font-semibold font-mono">Sandbox Simulation (Offline Cache)</strong></span>
         <a href="#" id="sheets-link-url" target="_blank" class="hidden text-emerald-500 hover:text-emerald-400 underline font-bold flex items-center gap-1 transition-all">
           Open Spreadsheet 🔗
         </a>
@@ -77,38 +120,46 @@ import Layout from '../layouts/Layout.astro';
   <!-- Main Container -->
   <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
 
-    <!-- RESTOCK ALERTS BOX (Pulsing Alerts Banner at Top) -->
-    <div id="restock-alerts-container" class="hidden rounded-xl border border-rose-500/30 bg-rose-950/15 p-4 shadow-md">
-      <div class="flex items-start gap-3">
-        <div class="h-8 w-8 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 flex-shrink-0 animate-pulse">
-          ⚠️
-        </div>
-        <div class="flex-1">
-          <h4 class="text-sm font-bold text-rose-500 font-mono tracking-wide uppercase">RE-STOCK ALERTS: Low Inventory Levels Detected</h4>
-          <p class="text-xs text-charcoal-400 mt-0.5">The following ingredients have fallen below their safety par levels and need to be ordered:</p>
-          <ul id="restock-alerts-list" class="mt-2.5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs font-mono">
-            <!-- Dynamically populated low stock alerts -->
-          </ul>
-        </div>
-      </div>
+    <!-- Nav tabs -->
+    <div class="flex border-b border-charcoal-700 gap-2 font-mono text-xs overflow-x-auto pb-px" id="nav-tabs">
+      <button class="tab-btn active-tab px-4 py-2.5 rounded-t-lg bg-charcoal-800 text-emerald-500 border-t border-x border-charcoal-700 font-bold transition-all" data-tab="tab-stock">
+        📦 Stock Control
+      </button>
+      <button class="tab-btn px-4 py-2.5 rounded-t-lg text-charcoal-400 hover:text-charcoal-100 transition-all" data-tab="tab-recipes">
+        📜 Menu Recipes & POS
+      </button>
+      <button class="tab-btn px-4 py-2.5 rounded-t-lg text-charcoal-400 hover:text-charcoal-100 transition-all" data-tab="tab-batches">
+        ⏳ Batches & Wastage
+      </button>
     </div>
 
-    <!-- Dashboard Main Grid Layout -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-      <!-- LEFT COLUMN: Voice / Text Update Panel (lg:span-5) -->
+    <!-- TAB 1: STOCK CONTROL SECTION -->
+    <div id="tab-stock" class="tab-content grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Left Column: Spoken / Typed Counts -->
       <section class="lg:col-span-5 space-y-6">
-        
-        <!-- Voice & Type Stock Count Card -->
+        <!-- Low Stock warning Alerts Box -->
+        <div id="restock-alerts-container" class="hidden rounded-xl border border-rose-500/30 bg-rose-950/15 p-4 shadow-md">
+          <div class="flex items-start gap-3">
+            <span class="text-rose-500 flex-shrink-0 animate-pulse text-lg">⚠️</span>
+            <div class="flex-1">
+              <h4 class="text-xs font-bold text-rose-500 font-mono tracking-wider uppercase">LOW STOCK REMINDERS</h4>
+              <ul id="restock-alerts-list" class="mt-2.5 space-y-1 text-xs font-mono">
+                <!-- Dynamically populated low stock alerts -->
+              </ul>
+            </div>
+          </div>
+        </div>
+
         <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
           <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4">
-            <h2 class="text-base font-semibold text-charcoal-50">Voice & Type Stock Auditor</h2>
+            <h2 class="text-base font-semibold text-charcoal-50">Voice & Type Auditor</h2>
             <p class="text-xs text-charcoal-400 mt-0.5">Quick update quantities by speaking or typing</p>
           </div>
 
           <div class="p-6 flex flex-col items-center">
             
-            <!-- Real-time Voice Transcription Button -->
+            <!-- Speech Recognition Mic Button -->
             <div class="relative my-4 flex flex-col items-center justify-center">
               <button id="mic-record-btn" class="h-28 w-28 rounded-full bg-charcoal-700 border-4 border-charcoal-600 flex items-center justify-center text-charcoal-50 hover:text-emerald-500 transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer z-10">
                 <svg id="mic-icon" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -120,21 +171,21 @@ import Layout from '../layouts/Layout.astro';
               <span id="mic-status-label" class="mt-4 text-xs font-semibold text-charcoal-400 font-mono tracking-wider">TAP TO VOICE COUNT</span>
             </div>
 
-            <!-- Voice Ticker / Live feedback -->
+            <!-- Voice Ticker -->
             <div id="voice-ticker" class="w-full text-center text-xs font-mono italic text-emerald-400 min-h-[20px] mb-4">
               Standing by... Speak your counts or type below.
             </div>
 
-            <!-- Text Box Input for Typed / Transcribed queries -->
+            <!-- Text Box Input -->
             <div class="w-full space-y-2">
-              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider">Spoken Transcription / Typed Counts</label>
+              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider">Spoken / Typed Counts</label>
               <textarea id="inventory-text-input" placeholder='e.g., Atta 5 bags, Dal 12 kg, Rice 10 bags' rows="3" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-xl p-3 text-sm text-charcoal-50 focus:outline-none focus:border-emerald-500 font-mono"></textarea>
               <button id="process-stock-btn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-charcoal-950 font-bold text-sm py-2.5 rounded-xl transition-all shadow-md">
                 Update Stock counts & Sync
               </button>
             </div>
 
-            <!-- Synced Stock adjustments feedback list -->
+            <!-- Synced Stock adjustments feedback -->
             <div id="sync-results" class="w-full mt-4 hidden">
               <div class="rounded-xl border border-emerald-500/20 bg-emerald-950/10 p-4">
                 <span class="text-[10px] font-bold text-emerald-500 font-mono uppercase block mb-2">Synced Stock Adjustments:</span>
@@ -207,27 +258,26 @@ import Layout from '../layouts/Layout.astro';
             </button>
           </div>
         </div>
-
       </section>
 
-      <!-- RIGHT COLUMN: Stock Inventory list & Inline Edits (lg:span-7) -->
+      <!-- Right Column: Stock Inventory Table -->
       <section class="lg:col-span-7">
         <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
-          
-          <!-- Card Header -->
           <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 class="text-base font-semibold text-charcoal-50">Master Ingredient Inventory</h2>
               <p class="text-xs text-charcoal-400 mt-0.5">Directly edit quantities in the table to synchronize instantly</p>
             </div>
             <div class="flex items-center gap-2">
+              <button id="demo-reset-btn-v1" class="rounded-md border border-charcoal-700 hover:border-charcoal-600 bg-charcoal-900 px-3 py-1.5 text-xs text-charcoal-200 transition-all">
+                Reset Stock levels
+              </button>
               <button id="clear-stocks-btn" class="rounded-md border border-rose-500/30 hover:bg-rose-950/20 bg-charcoal-900 px-3 py-1.5 text-xs text-rose-500 font-medium transition-all" title="Clear all stock levels to 0.0 for fresh count">
                 🗑️ Clear Stocks
               </button>
             </div>
           </div>
 
-          <!-- Inventory Table Container -->
           <div class="overflow-x-auto">
             <table class="w-full border-collapse text-left text-xs font-mono">
               <thead>
@@ -245,10 +295,208 @@ import Layout from '../layouts/Layout.astro';
               </tbody>
             </table>
           </div>
-
         </div>
       </section>
 
+    </div>
+
+    <!-- TAB 2: MENU RECIPES & POS SIMULATION SECTION -->
+    <div id="tab-recipes" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Left Column: Add Menu Item / Recipe Mapping Form -->
+      <section class="lg:col-span-5 space-y-6">
+        <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
+          <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4">
+            <h2 class="text-base font-semibold text-charcoal-50">Create Menu Item & Recipe</h2>
+            <p class="text-xs text-charcoal-400 mt-0.5">Map selling items to raw ingredients</p>
+          </div>
+
+          <form id="create-menu-form" class="p-6 space-y-4">
+            <div>
+              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Menu Item Name</label>
+              <input type="text" id="menu-name" required placeholder="e.g. Roti, Dal Fry" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Selling Price ($)</label>
+              <input type="number" step="0.01" id="menu-price" required placeholder="e.g. 5.50" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none" />
+            </div>
+
+            <!-- Dynamic Recipe Ingredients lines -->
+            <div class="space-y-2">
+              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider">Recipe Ingredients</label>
+              <div id="recipe-ingredients-list" class="space-y-2">
+                <!-- Row template will append here -->
+              </div>
+              <button type="button" id="add-recipe-row-btn" class="w-full rounded border border-charcoal-700 bg-charcoal-900 text-charcoal-200 hover:text-emerald-500 py-1.5 text-xs font-mono transition-all">
+                ➕ Add Ingredient Requirement
+              </button>
+            </div>
+
+            <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-charcoal-950 font-bold text-xs py-2.5 rounded-lg transition-all shadow-md">
+              Save Menu Item Recipe
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Right Column: Menu Items & POS Simulator -->
+      <section class="lg:col-span-7 space-y-6">
+        
+        <!-- POS Sales Simulator -->
+        <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden p-6 space-y-4">
+          <div class="border-b border-charcoal-700 pb-3 flex justify-between items-center">
+            <div>
+              <h3 class="text-sm font-bold text-charcoal-50 font-mono uppercase tracking-wider">POS Terminal Simulator</h3>
+              <p class="text-xs text-charcoal-400">Deduct raw stocks dynamically based on dishes sold</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Select Menu Item</label>
+              <select id="pos-menu-select" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none">
+                <!-- Options populated dynamically -->
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Quantity Sold</label>
+              <input type="number" id="pos-qty" min="1" value="1" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none" />
+            </div>
+          </div>
+          <button id="pos-simulate-btn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-charcoal-950 font-bold text-xs py-2.5 rounded-lg transition-all shadow-md">
+            Execute POS Sale & Deduct FIFO Batches
+          </button>
+        </div>
+
+        <!-- Menu list Table -->
+        <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
+          <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4">
+            <h2 class="text-base font-semibold text-charcoal-50">Active Menu & Recipe Specifications</h2>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-left text-xs font-mono">
+              <thead>
+                <tr class="border-b border-charcoal-700 bg-charcoal-900/40 text-charcoal-400 text-[10px] tracking-wider uppercase">
+                  <th class="p-4 font-semibold">Menu Dish</th>
+                  <th class="p-4 font-semibold">Price</th>
+                  <th class="p-4 font-semibold">Ingredients Required</th>
+                </tr>
+              </thead>
+              <tbody id="menu-table-tbody" class="divide-y divide-charcoal-700/50">
+                <!-- Dynamically populated menu rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+    </div>
+
+    <!-- TAB 3: BATCHES, WASTAGE, & EXPIRY ALERTS -->
+    <div id="tab-batches" class="tab-content hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Left Column: Log Batch / Log Wastage Forms -->
+      <section class="lg:col-span-5 space-y-6">
+        
+        <!-- Log New Stock Batch -->
+        <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
+          <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4">
+            <h2 class="text-base font-semibold text-charcoal-50">Receive New Stock Batch</h2>
+            <p class="text-xs text-charcoal-400 mt-0.5">Logs ingredient quantities with expiration limits</p>
+          </div>
+
+          <form id="receive-batch-form" class="p-6 space-y-4">
+            <div>
+              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Select Ingredient</label>
+              <select id="batch-ingredient-select" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none">
+                <!-- Options populated dynamically -->
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Batch Qty</label>
+                <input type="number" step="0.1" id="batch-qty" required class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Expiry Date</label>
+                <input type="date" id="batch-expiry" required class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50" />
+              </div>
+            </div>
+            <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-charcoal-950 font-bold text-xs py-2.5 rounded-lg transition-all shadow-md">
+              Receive & Log Batch
+            </button>
+          </form>
+        </div>
+
+        <!-- Log Stock Wastage -->
+        <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
+          <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4">
+            <h2 class="text-base font-semibold text-charcoal-50">Log Stock Wastage</h2>
+            <p class="text-xs text-charcoal-400 mt-0.5">Remove spoiled/wasted ingredients via FIFO</p>
+          </div>
+
+          <form id="log-wastage-form" class="p-6 space-y-4">
+            <div>
+              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Select Ingredient</label>
+              <select id="wastage-ingredient-select" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none">
+                <!-- Options populated dynamically -->
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Wasted Qty</label>
+                <input type="number" step="0.1" id="wastage-qty" required class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Reason</label>
+                <input type="text" id="wastage-reason" placeholder="Spoiled, Spilled" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50" />
+              </div>
+            </div>
+            <button type="submit" class="w-full bg-rose-600 hover:bg-rose-700 text-charcoal-50 font-bold text-xs py-2.5 rounded-lg transition-all shadow-md">
+              Log Wastage & Deduct Stock
+            </button>
+          </form>
+        </div>
+
+      </section>
+
+      <!-- Right Column: Expiry Alerts and Batches Table -->
+      <section class="lg:col-span-7 space-y-6">
+        
+        <!-- Expiry Alerts panel -->
+        <div id="expiry-alerts-card" class="hidden bg-charcoal-800 border border-amber-500/30 rounded-2xl shadow-xl overflow-hidden p-6 space-y-3">
+          <div class="flex items-center gap-2 text-amber-500 font-mono font-bold text-xs">
+            <span>⏳ EXPIRING BATCH ALERTS (Next 7 Days)</span>
+          </div>
+          <ul id="expiry-alerts-list" class="space-y-1.5 text-xs font-mono">
+            <!-- Expiring lists -->
+          </ul>
+        </div>
+
+        <!-- Stock batches list Table -->
+        <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
+          <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4">
+            <h2 class="text-base font-semibold text-charcoal-50">Active Ingredient Batches</h2>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-left text-xs font-mono">
+              <thead>
+                <tr class="border-b border-charcoal-700 bg-charcoal-900/40 text-charcoal-400 text-[10px] tracking-wider uppercase">
+                  <th class="p-4 font-semibold">Ingredient</th>
+                  <th class="p-4 font-semibold text-center">Batch Quantity</th>
+                  <th class="p-4 font-semibold text-center">Received Date</th>
+                  <th class="p-4 font-semibold text-center">Expiry Date</th>
+                </tr>
+              </thead>
+              <tbody id="batches-table-tbody" class="divide-y divide-charcoal-700/50">
+                <!-- Dynamically populated batch rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
     </div>
 
   </main>
@@ -265,24 +513,65 @@ import Layout from '../layouts/Layout.astro';
       ? 'http://localhost:8000' 
       : window.location.origin;
     let isBackendOnline = false;
-    let localIngredients = [
-      { id: 1, SKU_code: 'SKU-ATT-01', item_name: 'Atta', current_stock: 2.0, safety_par_level: 5.0, unit_type: 'bags', cost_per_unit: 12.00, vendor_name: 'Desi Grains Co.' },
-      { id: 2, SKU_code: 'SKU-DAL-02', item_name: 'Dal', current_stock: 8.0, safety_par_level: 10.0, unit_type: 'kg', cost_per_unit: 4.50, vendor_name: 'Desi Grains Co.' },
-      { id: 3, SKU_code: 'SKU-RIC-03', item_name: 'Rice', current_stock: 3.0, safety_par_level: 8.0, unit_type: 'bags', cost_per_unit: 18.00, vendor_name: 'Desi Grains Co.' },
-      { id: 4, SKU_code: 'SKU-ONN-04', item_name: 'Onions', current_stock: 18.0, safety_par_level: 15.0, unit_type: 'kg', cost_per_unit: 2.50, vendor_name: 'Fresh Produce Co.' },
-      { id: 5, SKU_code: 'SKU-POT-05', item_name: 'Potato', current_stock: 12.0, safety_par_level: 20.0, unit_type: 'kg', cost_per_unit: 1.80, vendor_name: 'Fresh Produce Co.' },
-      { id: 6, SKU_code: 'SKU-SUG-06', item_name: 'Sugar', current_stock: 4.0, safety_par_level: 10.0, unit_type: 'kg', cost_per_unit: 3.00, vendor_name: 'Sysco' }
-    ];
+    let localIngredients = [];
+    let localMenuItems = [];
+    let localBatches = [];
 
     // Initialize application
     document.addEventListener('DOMContentLoaded', async () => {
+      checkSessionToken();
       await checkBackendHealth();
       await fetchSheetsConfig();
-      await fetchIngredients();
-
+      await refreshData();
+      
+      initNavigation();
       initSpeechRecognition();
       setupEventListeners();
+      setupAuthFormListeners();
     });
+
+    // Dynamic headers based on local JWT storage
+    function getHeaders() {
+      const headers = {
+        'X-Tenant-ID': '1'
+      };
+      const token = localStorage.getItem('rk_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      return headers;
+    }
+
+    // Check token
+    function checkSessionToken() {
+      const token = localStorage.getItem('rk_token');
+      const modal = document.getElementById('auth-modal');
+      const logoutBtn = document.getElementById('logout-btn');
+      
+      if (!token) {
+        modal.classList.remove('hidden');
+        logoutBtn.classList.add('hidden');
+      } else {
+        modal.classList.add('hidden');
+        logoutBtn.classList.remove('hidden');
+        
+        // Try decoding to set sub title restaurant/user
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          document.getElementById('nav-subtitle').innerText = `Chef: ${payload.sub}`;
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+
+    // Refresh all tables
+    async function refreshData() {
+      await fetchIngredients();
+      await fetchMenuItems();
+      await fetchBatches();
+      await fetchExpiryAlerts();
+    }
 
     // Toast Alert Helper
     function showToast(message, type = 'success') {
@@ -291,7 +580,7 @@ import Layout from '../layouts/Layout.astro';
       toastMsg.innerText = message;
       
       if (type === 'error') {
-        toast.className = 'fixed bottom-4 right-4 z-50 bg-rose-955 border border-rose-500/30 text-rose-400 px-4 py-2.5 rounded-lg text-xs font-mono shadow-2xl flex items-center gap-2 transition-all duration-300 transform translate-y-0 opacity-100';
+        toast.className = 'fixed bottom-4 right-4 z-50 bg-rose-950 border border-rose-500/30 text-rose-400 px-4 py-2.5 rounded-lg text-xs font-mono shadow-2xl flex items-center gap-2 transition-all duration-300 transform translate-y-0 opacity-100';
       } else if (type === 'warning') {
         toast.className = 'fixed bottom-4 right-4 z-50 bg-amber-955 border border-amber-500/30 text-amber-400 px-4 py-2.5 rounded-lg text-xs font-mono shadow-2xl flex items-center gap-2 transition-all duration-300 transform translate-y-0 opacity-100';
       } else {
@@ -341,7 +630,9 @@ import Layout from '../layouts/Layout.astro';
       }
 
       try {
-        const res = await fetch(`${BACKEND_BASE_URL}/api/sheets/config`);
+        const res = await fetch(`${BACKEND_BASE_URL}/api/sheets/config`, {
+          headers: getHeaders()
+        });
         if (res.ok) {
           const config = await res.json();
           if (config.is_mock) {
@@ -371,7 +662,7 @@ import Layout from '../layouts/Layout.astro';
       if (isBackendOnline) {
         try {
           const res = await fetch(`${BACKEND_BASE_URL}/api/ingredients`, {
-            headers: { 'X-Tenant-ID': '1' }
+            headers: getHeaders()
           });
           if (res.ok) {
             localIngredients = await res.json();
@@ -381,6 +672,32 @@ import Layout from '../layouts/Layout.astro';
         }
       }
       renderInventory();
+      populateDropdowns();
+    }
+
+    // Populate dropdown selectors
+    function populateDropdowns() {
+      const batchSelect = document.getElementById('batch-ingredient-select');
+      const wastageSelect = document.getElementById('wastage-ingredient-select');
+      
+      batchSelect.innerHTML = '';
+      wastageSelect.innerHTML = '';
+
+      localIngredients.forEach(ing => {
+        const optionHTML = `<option value="${ing.id}">${ing.item_name} (${ing.unit_type})</option>`;
+        batchSelect.innerHTML += optionHTML;
+        wastageSelect.innerHTML += optionHTML;
+      });
+
+      // Update recipe ingredient dropdowns in Tab 2 if there's any active rows
+      document.querySelectorAll('.recipe-ing-dropdown').forEach(select => {
+        const currentVal = select.value;
+        select.innerHTML = '';
+        localIngredients.forEach(ing => {
+          select.innerHTML += `<option value="${ing.id}">${ing.item_name}</option>`;
+        });
+        if (currentVal) select.value = currentVal;
+      });
     }
 
     // Render alerts & table rows
@@ -397,20 +714,16 @@ import Layout from '../layouts/Layout.astro';
       localIngredients.forEach(ing => {
         const isLow = ing.current_stock < ing.safety_par_level;
         
-        // Add to low-stock alert panel
         if (isLow) {
           lowStockItemsCount++;
           alertsList.innerHTML += `
-            <li class="flex items-center justify-between border border-rose-500/20 bg-rose-955/20 rounded-lg p-2.5 text-rose-300">
-              <span><strong>${ing.item_name}</strong> (${ing.SKU_code})</span>
-              <span class="bg-rose-500/10 px-2 py-0.5 rounded text-[10px] font-bold">
-                Stock: ${ing.current_stock} / Par: ${ing.safety_par_level} ${ing.unit_type}
-              </span>
+            <li class="flex items-center justify-between text-rose-400">
+              <span>➔ <strong>${ing.item_name}</strong> is low</span>
+              <span>(${ing.current_stock}/${ing.safety_par_level} ${ing.unit_type})</span>
             </li>
           `;
         }
 
-        // Add to table
         const rowClass = isLow ? 'bg-amber-955/5 border-l-2 border-l-amber-500/40 hover:bg-amber-955/10' : 'hover:bg-charcoal-700/30';
         const badgeClass = isLow ? 'bg-rose-955 border border-rose-500/30 text-rose-500 animate-pulse' : 'bg-emerald-955 border border-emerald-500/30 text-emerald-500';
         const badgeText = isLow ? 'LOW STOCK' : 'NORMAL';
@@ -453,33 +766,18 @@ import Layout from '../layouts/Layout.astro';
         `;
       });
 
-      // Show alert box if any items are low
       if (lowStockItemsCount > 0) {
         alertsContainer.classList.remove('hidden');
       } else {
         alertsContainer.classList.add('hidden');
       }
 
-      // Re-attach inline save buttons event listeners
+      // Inline save buttons
       document.querySelectorAll('.save-inline-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
           const id = parseInt(btn.getAttribute('data-id'));
-          // Find input with same id
           const input = document.querySelector(`.stock-inline-input[data-id="${id}"]`);
           if (input) {
-            const stock = parseFloat(input.value);
-            if (!isNaN(stock)) {
-              await updateSingleStock(id, stock);
-            }
-          }
-        });
-      });
-
-      // Support hitting Enter in inline inputs
-      document.querySelectorAll('.stock-inline-input').forEach(input => {
-        input.addEventListener('keydown', async (e) => {
-          if (e.key === 'Enter') {
-            const id = parseInt(input.getAttribute('data-id'));
             const stock = parseFloat(input.value);
             if (!isNaN(stock)) {
               await updateSingleStock(id, stock);
@@ -498,17 +796,14 @@ import Layout from '../layouts/Layout.astro';
         try {
           const res = await fetch(`${BACKEND_BASE_URL}/api/ingredients/${id}`, {
             method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Tenant-ID': '1'
-            },
+            headers: getHeaders(),
             body: JSON.stringify({ current_stock: stock })
           });
           if (res.ok) {
             const updated = await res.json();
             item.current_stock = updated.current_stock;
-            showToast(`Updated ${item.item_name} stock to ${stock} ${item.unit_type}`);
-            renderInventory();
+            showToast(`Updated ${item.item_name} stock to ${stock}`);
+            await refreshData();
           } else {
             showToast('Failed to sync stock updates', 'error');
           }
@@ -517,9 +812,8 @@ import Layout from '../layouts/Layout.astro';
           showToast('Connection error updating stock', 'error');
         }
       } else {
-        // Sandbox local state update
         item.current_stock = stock;
-        showToast(`[Sandbox] Set ${item.item_name} stock to ${stock} ${item.unit_type}`);
+        showToast(`[Sandbox] Set ${item.item_name} stock to ${stock}`);
         renderInventory();
       }
     }
@@ -597,21 +891,350 @@ import Layout from '../layouts/Layout.astro';
           }
         });
       } else {
-        // Fallback for unsupported browsers
         recordBtn.addEventListener('click', () => {
-          showToast('Voice Recognition is not supported by your browser. Please type or use simulation shortcuts.', 'warning');
+          showToast('Voice Recognition is not supported by your browser. Please type instead.', 'warning');
           voiceTicker.innerText = 'Web Speech recognition not supported. Please type instead.';
         });
       }
     }
 
-    // Setup other events
+    // Toggle Tab Panels
+    function initNavigation() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tabId = btn.getAttribute('data-tab');
+          
+          // Switch tabs
+          document.querySelectorAll('.tab-btn').forEach(b => {
+            b.className = "tab-btn px-4 py-2.5 rounded-t-lg text-charcoal-400 hover:text-charcoal-100 transition-all";
+          });
+          btn.className = "tab-btn active-tab px-4 py-2.5 rounded-t-lg bg-charcoal-800 text-emerald-500 border-t border-x border-charcoal-700 font-bold transition-all";
+
+          // Show contents
+          document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.add('hidden');
+          });
+          document.getElementById(tabId).classList.remove('hidden');
+        });
+      });
+    }
+
+    // Recipe Ingredients Line row manager
+    let recipeRowsCounter = 0;
+    function addRecipeRequirementRow(ingId = '', qty = '') {
+      const container = document.getElementById('recipe-ingredients-list');
+      const rowId = `recipe-row-${recipeRowsCounter++}`;
+      
+      let dropdownOptions = '';
+      localIngredients.forEach(ing => {
+        const selected = ing.id == ingId ? 'selected' : '';
+        dropdownOptions += `<option value="${ing.id}" ${selected}>${ing.item_name} (${ing.unit_type})</option>`;
+      });
+
+      container.insertAdjacentHTML('beforeend', `
+        <div class="flex gap-2 items-center" id="${rowId}">
+          <select class="recipe-ing-dropdown flex-1 bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none">
+            ${dropdownOptions}
+          </select>
+          <input type="number" step="0.01" value="${qty}" required placeholder="Qty required" class="recipe-qty-input w-24 bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50" />
+          <button type="button" class="remove-recipe-row-btn text-rose-500 font-bold text-xs p-2 hover:underline" data-row-id="${rowId}">✕</button>
+        </div>
+      `);
+
+      // Row remover listener
+      document.querySelector(`button[data-row-id="${rowId}"]`).addEventListener('click', () => {
+        document.getElementById(rowId).remove();
+      });
+    }
+
+    // Fetch and render Menu Items & Recipes
+    async function fetchMenuItems() {
+      if (isBackendOnline) {
+        try {
+          const res = await fetch(`${BACKEND_BASE_URL}/api/menu`, {
+            headers: getHeaders()
+          });
+          if (res.ok) {
+            localMenuItems = await res.json();
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      renderMenuItems();
+    }
+
+    function renderMenuItems() {
+      const tbody = document.getElementById('menu-table-tbody');
+      const select = document.getElementById('pos-menu-select');
+      
+      tbody.innerHTML = '';
+      select.innerHTML = '';
+
+      if (localMenuItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-charcoal-400 italic">No menu items mapped yet. Use the recipe builder on the left.</td></tr>`;
+        return;
+      }
+
+      localMenuItems.forEach(item => {
+        // Dropdown option
+        select.innerHTML += `<option value="${item.id}">${item.name} ($${item.price.toFixed(2)})</option>`;
+
+        // Table requirement column
+        let reqListHTML = '<ul class="list-disc list-inside space-y-0.5 text-charcoal-300 font-mono text-[11px]">';
+        item.recipes.forEach(req => {
+          // Map ingredient name from dropdown metadata
+          const ing = localIngredients.find(i => i.id === req.ingredient_id);
+          const name = ing ? ing.item_name : `Ingredient #${req.ingredient_id}`;
+          const unit = ing ? ing.unit_type : '';
+          reqListHTML += `<li>${req.quantity_required} ${unit} of <strong>${name}</strong></li>`;
+        });
+        reqListHTML += '</ul>';
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-charcoal-700/30 transition-colors border-b border-charcoal-700/40">
+            <td class="p-4 font-bold text-charcoal-50">${item.name}</td>
+            <td class="p-4 text-charcoal-200 font-bold">$${item.price.toFixed(2)}</td>
+            <td class="p-4">${reqListHTML}</td>
+          </tr>
+        `;
+      });
+    }
+
+    // Expiry and Stock Batches fetching
+    async function fetchBatches() {
+      if (isBackendOnline) {
+        try {
+          const res = await fetch(`${BACKEND_BASE_URL}/api/inventory/batches`, {
+            headers: getHeaders()
+          });
+          if (res.ok) {
+            localBatches = await res.json();
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      renderBatches();
+    }
+
+    function renderBatches() {
+      const tbody = document.getElementById('batches-table-tbody');
+      tbody.innerHTML = '';
+
+      if (localBatches.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-charcoal-400 italic">No active batches logged. Receive new stock batches on the left.</td></tr>`;
+        return;
+      }
+
+      localBatches.forEach(batch => {
+        const ing = localIngredients.find(i => i.id === batch.master_ingredient_id);
+        const name = ing ? ing.item_name : `Ingredient #${batch.master_ingredient_id}`;
+        const unit = ing ? ing.unit_type : '';
+        const recDate = new Date(batch.received_date).toLocaleDateString();
+        const expDate = new Date(batch.expiry_date).toLocaleDateString();
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-charcoal-700/30 transition-colors border-b border-charcoal-700/40">
+            <td class="p-4">
+              <span class="font-bold text-charcoal-50">${name}</span>
+            </td>
+            <td class="p-4 text-center font-bold text-emerald-400">${batch.quantity} ${unit}</td>
+            <td class="p-4 text-center text-charcoal-300">${recDate}</td>
+            <td class="p-4 text-center text-rose-400 font-semibold">${expDate}</td>
+          </tr>
+        `;
+      });
+    }
+
+    async function fetchExpiryAlerts() {
+      const card = document.getElementById('expiry-alerts-card');
+      const list = document.getElementById('expiry-alerts-list');
+      
+      list.innerHTML = '';
+
+      if (!isBackendOnline) {
+        card.classList.add('hidden');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${BACKEND_BASE_URL}/api/inventory/expiry-alerts`, {
+          headers: getHeaders()
+        });
+        if (res.ok) {
+          const alerts = await res.json();
+          if (alerts.length > 0) {
+            card.classList.remove('hidden');
+            alerts.forEach(batch => {
+              const ing = localIngredients.find(i => i.id === batch.master_ingredient_id);
+              const name = ing ? ing.item_name : `Ingredient #${batch.master_ingredient_id}`;
+              const unit = ing ? ing.unit_type : '';
+              const daysLeft = Math.ceil((new Date(batch.expiry_date) - new Date()) / (1000 * 60 * 60 * 24));
+              
+              list.innerHTML += `
+                <li class="text-amber-500">
+                  ⚠️ Batch of <strong>${name}</strong> (${batch.quantity} ${unit}) expires in <strong class="underline">${daysLeft} days</strong> (${new Date(batch.expiry_date).toLocaleDateString()})
+                </li>
+              `;
+            });
+          } else {
+            card.classList.add('hidden');
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Process spoken/typed text sync
+    async function handleTextSync(text) {
+      const resultPanel = document.getElementById('sync-results');
+      const updatedList = document.getElementById('updated-stock-list');
+      updatedList.innerHTML = '';
+
+      if (isBackendOnline) {
+        try {
+          const res = await fetch(`${BACKEND_BASE_URL}/api/inventory/voice-text-upload`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ text })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            
+            if (data.updated_ingredients && data.updated_ingredients.length > 0) {
+              resultPanel.classList.remove('hidden');
+              data.updated_ingredients.forEach(adj => {
+                updatedList.innerHTML += `
+                  <li class="flex justify-between items-center text-charcoal-200">
+                    <span><strong>${adj.item_name}</strong></span>
+                    <span class="text-emerald-400 font-bold">
+                      ${adj.old_stock} ➔ ${adj.new_stock} ${adj.unit}
+                    </span>
+                  </li>
+                `;
+              });
+              showToast(`Synced spoken counts to database & Google Sheets`);
+            } else {
+              resultPanel.classList.add('hidden');
+              showToast('No ingredients matched from voice input.', 'warning');
+            }
+            await refreshData();
+          } else {
+            showToast('Voice sync failed on backend', 'error');
+          }
+        } catch (e) {
+          console.error(e);
+          showToast('Connection error processing count', 'error');
+        }
+      } else {
+        // Fallback local regex parsing
+        const parsed = parseTextSandbox(text);
+        if (parsed.length > 0) {
+          resultPanel.classList.remove('hidden');
+          parsed.forEach(adj => {
+            updatedList.innerHTML += `
+              <li class="flex justify-between items-center text-charcoal-200">
+                <span><strong>${adj.item_name}</strong></span>
+                <span class="text-emerald-400 font-bold">
+                  ${adj.old_stock} ➔ ${adj.new_stock} ${adj.unit}
+                </span>
+              </li>
+            `;
+          });
+          showToast(`[Sandbox] Adjusted local stocks`);
+          renderInventory();
+        } else {
+          resultPanel.classList.add('hidden');
+          showToast('Failed to parse simulated phrase format.', 'warning');
+        }
+      }
+    }
+
+    // Local JS Regex Matcher for sandbox fallbacks
+    function parseTextSandbox(text) {
+      const adjustments = [];
+      const phrases = text.toLowerCase().split(/[;,\n]|and|then/);
+      
+      phrases.forEach(phrase => {
+        phrase = phrase.trim();
+        if (!phrase) return;
+        
+        const numMatch = phrase.match(/(\d+(?:\.\d+)?)/);
+        if (!numMatch) return;
+        
+        const qty = parseFloat(numMatch[0]);
+        const numIdx = phrase.indexOf(numMatch[0]);
+        
+        let itemQuery = '';
+        let unitText = 'units';
+        
+        const left = phrase.substring(0, numIdx).trim();
+        const right = phrase.substring(numIdx + numMatch[0].length).trim();
+        
+        if (!left || ['i have', 'we have', 'set', 'update', 'add'].includes(left)) {
+          const rightClean = right.replace(/^of\s+/, '').trim();
+          const words = rightClean.split(' ');
+          if (words.length > 1 && ['bags', 'kg', 'boxes', 'packets', 'blocks'].includes(words[0])) {
+            unitText = words[0];
+            itemQuery = words.slice(1).join(' ');
+          } else {
+            itemQuery = rightClean;
+          }
+        } else {
+          itemQuery = left.replace(/^(set|update|add|change)\s+/, '').replace(/\s+to$/, '');
+          const words = right.split(' ');
+          if (words.length > 0) {
+            unitText = words[0];
+          }
+        }
+
+        itemQuery = itemQuery.trim();
+        if (!itemQuery) return;
+
+        let bestMatch = null;
+        let highestScore = 0;
+        
+        localIngredients.forEach(ing => {
+          const nameLower = ing.item_name.toLowerCase();
+          let score = 0;
+          if (nameLower === itemQuery) {
+            score = 100;
+          } else if (nameLower.includes(itemQuery) || itemQuery.includes(nameLower)) {
+            score = 70;
+          }
+          
+          if (score > highestScore) {
+            highestScore = score;
+            bestMatch = ing;
+          }
+        });
+
+        if (bestMatch && highestScore >= 70) {
+          const oldStock = bestMatch.current_stock;
+          bestMatch.current_stock = qty;
+          adjustments.push({
+            item_name: bestMatch.item_name,
+            old_stock: oldStock,
+            new_stock: qty,
+            unit: bestMatch.unit_type
+          });
+        }
+      });
+
+      return adjustments;
+    }
+
+    // Set up form submission & button event listeners
     function setupEventListeners() {
       const sheetsStatus = document.getElementById('sheets-status');
       const sheetsDrawer = document.getElementById('sheets-info-drawer');
       const closeDrawer = document.getElementById('close-sheets-drawer');
       const toggleAddFormBtn = document.getElementById('toggle-add-form');
       const addForm = document.getElementById('add-ing-form');
+      const addRecipeBtn = document.getElementById('add-recipe-row-btn');
 
       // Sync sheets drawer visibility
       sheetsStatus.addEventListener('click', () => {
@@ -631,12 +1254,79 @@ import Layout from '../layouts/Layout.astro';
         }
       });
 
+      // Log out
+      document.getElementById('logout-btn').addEventListener('click', () => {
+        localStorage.removeItem('rk_token');
+        showToast('Logged out successfully.');
+        window.location.reload();
+      });
+
+      // Global Reset Demo
+      const triggerReset = async () => {
+        if (isBackendOnline) {
+          try {
+            const res = await fetch(`${BACKEND_BASE_URL}/api/ingredients/reset`, {
+              method: 'POST',
+              headers: getHeaders()
+            });
+            if (res.ok) {
+              showToast('Database reset to standard items & stocks');
+              await refreshData();
+            } else {
+              showToast('Reset failed', 'error');
+            }
+          } catch (e) {
+            console.error(e);
+            showToast('API reset call failed', 'error');
+          }
+        } else {
+          localIngredients = [
+            { id: 1, SKU_code: 'SKU-ATT-01', item_name: 'Atta', current_stock: 2.0, safety_par_level: 5.0, unit_type: 'bags', cost_per_unit: 12.00, vendor_name: 'Desi Grains Co.' },
+            { id: 2, SKU_code: 'SKU-DAL-02', item_name: 'Dal', current_stock: 8.0, safety_par_level: 10.0, unit_type: 'kg', cost_per_unit: 4.50, vendor_name: 'Desi Grains Co.' },
+            { id: 3, SKU_code: 'SKU-RIC-03', item_name: 'Rice', current_stock: 3.0, safety_par_level: 8.0, unit_type: 'bags', cost_per_unit: 18.00, vendor_name: 'Desi Grains Co.' },
+            { id: 4, SKU_code: 'SKU-ONN-04', item_name: 'Onions', current_stock: 18.0, safety_par_level: 15.0, unit_type: 'kg', cost_per_unit: 2.50, vendor_name: 'Fresh Produce Co.' },
+            { id: 5, SKU_code: 'SKU-POT-05', item_name: 'Potato', current_stock: 12.0, safety_par_level: 20.0, unit_type: 'kg', cost_per_unit: 1.80, vendor_name: 'Fresh Produce Co.' },
+            { id: 6, SKU_code: 'SKU-SUG-06', item_name: 'Sugar', current_stock: 4.0, safety_par_level: 10.0, unit_type: 'kg', cost_per_unit: 3.00, vendor_name: 'Sysco' }
+          ];
+          showToast('[Sandbox] Reset local values to defaults');
+          renderInventory();
+        }
+      };
+
+      document.getElementById('demo-reset-btn').addEventListener('click', triggerReset);
+      document.getElementById('demo-reset-btn-v1').addEventListener('click', triggerReset);
+
+      // Clear Stocks event
+      document.getElementById('clear-stocks-btn').addEventListener('click', async () => {
+        if (isBackendOnline) {
+          try {
+            const res = await fetch(`${BACKEND_BASE_URL}/api/ingredients/clear-stocks`, {
+              method: 'POST',
+              headers: getHeaders()
+            });
+            if (res.ok) {
+              showToast('Database stocks cleared to 0.0');
+              await refreshData();
+            } else {
+              showToast('Clear failed', 'error');
+            }
+          } catch (e) {
+            console.error(e);
+            showToast('API clear call failed', 'error');
+          }
+        } else {
+          localIngredients.forEach(ing => ing.current_stock = 0.0);
+          showToast('[Sandbox] Cleared local stock caches');
+          renderInventory();
+        }
+      });
+
       // Quick simulations
       document.querySelectorAll('.voice-sim-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const phrase = btn.getAttribute('data-phrase');
           document.getElementById('inventory-text-input').value = phrase;
-          document.getElementById('voice-ticker').innerText = `"${phrase}" (Simulated Phrase copied)`;
+          document.getElementById('voice-ticker').innerText = `"${phrase}" (Simulated count phrase copied)`;
           handleTextSync(phrase);
         });
       });
@@ -651,61 +1341,129 @@ import Layout from '../layouts/Layout.astro';
         }
       });
 
-      // Global Reset Demo
-      document.getElementById('demo-reset-btn').addEventListener('click', async () => {
+      // Add Recipe ingredient row
+      addRecipeBtn.addEventListener('click', () => {
+        addRecipeRequirementRow();
+      });
+
+      // Create Menu Item & Recipe submission
+      document.getElementById('create-menu-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('menu-name').value.trim();
+        const price = parseFloat(document.getElementById('menu-price').value);
+
+        if (!name || isNaN(price)) {
+          showToast('Please specify valid menu item name and price.', 'error');
+          return;
+        }
+
+        // Build recipes array
+        const recipes = [];
+        let hasInvalidInput = false;
+
+        document.getElementById('recipe-ingredients-list').querySelectorAll('.flex').forEach(row => {
+          const ingId = parseInt(row.querySelector('select').value);
+          const qty = parseFloat(row.querySelector('.recipe-qty-input').value);
+          if (isNaN(ingId) || isNaN(qty) || qty <= 0) {
+            hasInvalidInput = true;
+          } else {
+            recipes.push({ ingredient_id: ingId, quantity_required: qty });
+          }
+        });
+
+        if (hasInvalidInput || recipes.length === 0) {
+          showToast('Please complete recipe ingredient requirements with positive numbers.', 'error');
+          return;
+        }
+
         if (isBackendOnline) {
           try {
-            const res = await fetch(`${BACKEND_BASE_URL}/api/ingredients/reset`, {
+            const res = await fetch(`${BACKEND_BASE_URL}/api/menu`, {
               method: 'POST',
-              headers: { 'X-Tenant-ID': '1' }
+              headers: {
+                'Content-Type': 'application/json',
+                ...getHeaders()
+              },
+              body: JSON.stringify({ name, price, recipes })
             });
+
             if (res.ok) {
-              showToast('Database reset to standard items & stocks');
-              await fetchIngredients();
+              showToast(`Created menu item: ${name}`);
+              document.getElementById('menu-name').value = '';
+              document.getElementById('menu-price').value = '';
+              document.getElementById('recipe-ingredients-list').innerHTML = '';
+              
+              await fetchMenuItems();
             } else {
-              showToast('Reset failed', 'error');
+              const err = await res.json();
+              showToast(err.detail || 'Failed to create menu item', 'error');
             }
           } catch (e) {
             console.error(e);
-            showToast('API reset call failed', 'error');
+            showToast('Connection error creating recipe', 'error');
           }
         } else {
-          // Reset local copy
-          localIngredients = [
-            { id: 1, SKU_code: 'SKU-ATT-01', item_name: 'Atta', current_stock: 2.0, safety_par_level: 5.0, unit_type: 'bags', cost_per_unit: 12.00, vendor_name: 'Desi Grains Co.' },
-            { id: 2, SKU_code: 'SKU-DAL-02', item_name: 'Dal', current_stock: 8.0, safety_par_level: 10.0, unit_type: 'kg', cost_per_unit: 4.50, vendor_name: 'Desi Grains Co.' },
-            { id: 3, SKU_code: 'SKU-RIC-03', item_name: 'Rice', current_stock: 3.0, safety_par_level: 8.0, unit_type: 'bags', cost_per_unit: 18.00, vendor_name: 'Desi Grains Co.' },
-            { id: 4, SKU_code: 'SKU-ONN-04', item_name: 'Onions', current_stock: 18.0, safety_par_level: 15.0, unit_type: 'kg', cost_per_unit: 2.50, vendor_name: 'Fresh Produce Co.' },
-            { id: 5, SKU_code: 'SKU-POT-05', item_name: 'Potato', current_stock: 12.0, safety_par_level: 20.0, unit_type: 'kg', cost_per_unit: 1.80, vendor_name: 'Fresh Produce Co.' },
-            { id: 6, SKU_code: 'SKU-SUG-06', item_name: 'Sugar', current_stock: 4.0, safety_par_level: 10.0, unit_type: 'kg', cost_per_unit: 3.00, vendor_name: 'Sysco' }
-          ];
-          showToast('[Sandbox] Reset local values to defaults');
-          renderInventory();
+          // Sandbox Mode fallback
+          const newId = localMenuItems.length + 1;
+          localMenuItems.push({ id: newId, name, price, recipes });
+          showToast(`[Sandbox] Created recipe: ${name}`);
+          
+          document.getElementById('menu-name').value = '';
+          document.getElementById('menu-price').value = '';
+          document.getElementById('recipe-ingredients-list').innerHTML = '';
+          renderMenuItems();
         }
       });
 
-      // Clear Stocks event
-      document.getElementById('clear-stocks-btn').addEventListener('click', async () => {
+      // POS Simulate POS Sale click
+      document.getElementById('pos-simulate-btn').addEventListener('click', async () => {
+        const select = document.getElementById('pos-menu-select');
+        const qtyInput = document.getElementById('pos-qty');
+        
+        const menuId = parseInt(select.value);
+        const qtySold = parseInt(qtyInput.value);
+
+        if (isNaN(menuId) || isNaN(qtySold) || qtySold <= 0) {
+          showToast('Please configure a valid menu item and sale quantity.', 'error');
+          return;
+        }
+
         if (isBackendOnline) {
           try {
-            const res = await fetch(`${BACKEND_BASE_URL}/api/ingredients/clear-stocks`, {
+            const res = await fetch(`${BACKEND_BASE_URL}/api/sales`, {
               method: 'POST',
-              headers: { 'X-Tenant-ID': '1' }
+              headers: {
+                'Content-Type': 'application/json',
+                ...getHeaders()
+              },
+              body: JSON.stringify({ menu_item_id: menuId, quantity_sold: qtySold })
             });
+
             if (res.ok) {
-              showToast('Database stocks cleared to 0.0');
-              await fetchIngredients();
+              showToast(`Simulated sale of ${qtySold}x menu item`);
+              qtyInput.value = '1';
+              await refreshData();
             } else {
-              showToast('Clear failed', 'error');
+              const err = await res.json();
+              showToast(err.detail || 'Failed to process POS sale', 'error');
             }
           } catch (e) {
             console.error(e);
-            showToast('API clear call failed', 'error');
+            showToast('Connection error on POS simulation', 'error');
           }
         } else {
-          localIngredients.forEach(ing => ing.current_stock = 0.0);
-          showToast('[Sandbox] Cleared local stock caches');
-          renderInventory();
+          // Local sandbox deduction
+          const item = localMenuItems.find(i => i.id === menuId);
+          if (item) {
+            item.recipes.forEach(req => {
+              const ing = localIngredients.find(i => i.id === req.ingredient_id);
+              if (ing) {
+                ing.current_stock = Math.max(0.0, ing.current_stock - (req.quantity_required * qtySold));
+              }
+            });
+            showToast(`[Sandbox] Subtracted stocks for menu item sale`);
+            renderInventory();
+          }
         }
       });
 
@@ -739,14 +1497,12 @@ import Layout from '../layouts/Layout.astro';
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'X-Tenant-ID': '1'
+                ...getHeaders()
               },
               body: JSON.stringify(payload)
             });
             if (res.ok) {
               showToast(`Registered SKU ${sku} (${name})`);
-              
-              // Clear fields
               document.getElementById('new-ing-name').value = '';
               document.getElementById('new-ing-sku').value = '';
               document.getElementById('new-ing-unit').value = '';
@@ -756,7 +1512,7 @@ import Layout from '../layouts/Layout.astro';
               addForm.classList.add('hidden');
               toggleAddFormBtn.innerText = 'Toggle Form';
 
-              await fetchIngredients();
+              await refreshData();
             } else {
               const err = await res.json();
               showToast(err.detail || 'Failed to save item', 'error');
@@ -766,7 +1522,6 @@ import Layout from '../layouts/Layout.astro';
             showToast('API save custom item failed', 'error');
           }
         } else {
-          // Push locally
           const newId = localIngredients.length + 1;
           localIngredients.push({ id: newId, ...payload });
           showToast(`[Sandbox] Saved ${name} locally`);
@@ -781,160 +1536,229 @@ import Layout from '../layouts/Layout.astro';
           toggleAddFormBtn.innerText = 'Toggle Form';
 
           renderInventory();
+          populateDropdowns();
         }
       });
-    }
 
-    // Process typed / transcript counts text
-    async function handleTextSync(text) {
-      const resultPanel = document.getElementById('sync-results');
-      const updatedList = document.getElementById('updated-stock-list');
-      
-      updatedList.innerHTML = '';
+      // Receive batch form submission
+      document.getElementById('receive-batch-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const ingId = parseInt(document.getElementById('batch-ingredient-select').value);
+        const qty = parseFloat(document.getElementById('batch-qty').value);
+        const expiry = document.getElementById('batch-expiry').value;
 
-      if (isBackendOnline) {
-        try {
-          const res = await fetch(`${BACKEND_BASE_URL}/api/inventory/voice-text-upload`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Tenant-ID': '1'
-            },
-            body: JSON.stringify({ text })
-          });
+        if (isNaN(ingId) || isNaN(qty) || qty <= 0 || !expiry) {
+          showToast('Please specify valid batch quantity and expiration date.', 'error');
+          return;
+        }
 
-          if (res.ok) {
-            const data = await res.json();
-            
-            if (data.updated_ingredients && data.updated_ingredients.length > 0) {
-              resultPanel.classList.remove('hidden');
-              data.updated_ingredients.forEach(adj => {
-                updatedList.innerHTML += `
-                  <li class="flex justify-between items-center text-charcoal-200">
-                    <span><strong>${adj.item_name}</strong></span>
-                    <span class="text-emerald-400 font-bold">
-                      ${adj.old_stock} ➔ ${adj.new_stock} ${adj.unit}
-                    </span>
-                  </li>
-                `;
-              });
-              showToast(`Successfully synced counts to DB & Sheets`);
+        // Parse date to datetime iso
+        const expiryISO = new Date(expiry).toISOString();
+
+        if (isBackendOnline) {
+          try {
+            const res = await fetch(`${BACKEND_BASE_URL}/api/inventory/batches`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...getHeaders()
+              },
+              body: JSON.stringify({ master_ingredient_id: ingId, quantity: qty, expiry_date: expiryISO })
+            });
+
+            if (res.ok) {
+              showToast('Successfully received batch & updated inventory stock');
+              document.getElementById('batch-qty').value = '';
+              document.getElementById('batch-expiry').value = '';
+              await refreshData();
             } else {
-              resultPanel.classList.add('hidden');
-              showToast('No matching items parsed from text.', 'warning');
+              showToast('Failed to receive batch', 'error');
             }
-            
-            // Reload ingredients from backend
-            await fetchIngredients();
-          } else {
-            showToast('Backend text sync failed', 'error');
-          }
-        } catch (e) {
-          console.error(e);
-          showToast('Connection error processing count', 'error');
-        }
-      } else {
-        // Parse locally using a simple JS regex matcher for Sandbox Mode!
-        const parsed = parseTextSandbox(text);
-        if (parsed.length > 0) {
-          resultPanel.classList.remove('hidden');
-          parsed.forEach(adj => {
-            updatedList.innerHTML += `
-              <li class="flex justify-between items-center text-charcoal-200">
-                <span><strong>${adj.item_name}</strong></span>
-                <span class="text-emerald-400 font-bold">
-                  ${adj.old_stock} ➔ ${adj.new_stock} ${adj.unit}
-                </span>
-              </li>
-            `;
-          });
-          showToast(`[Sandbox] Synced stock adjustments locally`);
-          renderInventory();
-        } else {
-          resultPanel.classList.add('hidden');
-          showToast('No items parsed. Use format: "[Item] [Qty]"', 'warning');
-        }
-      }
-    }
-
-    // Local JS Regex Matcher for sandbox fallbacks
-    function parseTextSandbox(text) {
-      const adjustments = [];
-      const phrases = text.toLowerCase().split(/[;,\n]|and|then/);
-      
-      phrases.forEach(phrase => {
-        phrase = phrase.trim();
-        if (!phrase) return;
-        
-        // Find quantity
-        const numMatch = phrase.match(/(\d+(?:\.\d+)?)/);
-        if (!numMatch) return;
-        
-        const qty = parseFloat(numMatch[0]);
-        const numIdx = phrase.indexOf(numMatch[0]);
-        
-        // Simple name split
-        let itemQuery = '';
-        let unitText = 'units';
-        
-        const left = phrase.substring(0, numIdx).trim();
-        const right = phrase.substring(numIdx + numMatch[0].length).trim();
-        
-        // Determine name
-        if (!left || ['i have', 'we have', 'set', 'update', 'add'].includes(left)) {
-          // E.g., "5 bags of rice"
-          const rightClean = right.replace(/^of\s+/, '').trim();
-          const words = rightClean.split(' ');
-          if (words.length > 1 && ['bags', 'kg', 'boxes', 'packets', 'blocks'].includes(words[0])) {
-            unitText = words[0];
-            itemQuery = words.slice(1).join(' ');
-          } else {
-            itemQuery = rightClean;
+          } catch (e) {
+            console.error(e);
+            showToast('Connection error receiving batch', 'error');
           }
         } else {
-          // E.g., "rice 5 bags"
-          itemQuery = left.replace(/^(set|update|add|change)\s+/, '').replace(/\s+to$/, '');
-          const words = right.split(' ');
-          if (words.length > 0) {
-            unitText = words[0];
-          }
-        }
-
-        itemQuery = itemQuery.trim();
-        if (!itemQuery) return;
-
-        // Find match in local list
-        let bestMatch = null;
-        let highestScore = 0;
-        
-        localIngredients.forEach(ing => {
-          const nameLower = ing.item_name.toLowerCase();
-          let score = 0;
-          if (nameLower === itemQuery) {
-            score = 100;
-          } else if (nameLower.includes(itemQuery) || itemQuery.includes(nameLower)) {
-            score = 70;
-          }
+          // Sandbox Mode Batch
+          const newId = localBatches.length + 1;
+          localBatches.push({ id: newId, master_ingredient_id: ingId, quantity: qty, received_date: new Date().toISOString(), expiry_date: expiryISO });
           
-          if (score > highestScore) {
-            highestScore = score;
-            bestMatch = ing;
+          const ing = localIngredients.find(i => i.id === ingId);
+          if (ing) {
+            ing.current_stock += qty;
           }
-        });
-
-        if (bestMatch && highestScore >= 70) {
-          const oldStock = bestMatch.current_stock;
-          bestMatch.current_stock = qty;
-          adjustments.push({
-            item_name: bestMatch.item_name,
-            old_stock: oldStock,
-            new_stock: qty,
-            unit: bestMatch.unit_type
-          });
+          showToast('[Sandbox] Logged batch locally');
+          document.getElementById('batch-qty').value = '';
+          document.getElementById('batch-expiry').value = '';
+          
+          renderInventory();
+          renderBatches();
         }
       });
 
-      return adjustments;
+      // Log wastage form submission
+      document.getElementById('log-wastage-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const ingId = parseInt(document.getElementById('wastage-ingredient-select').value);
+        const qty = parseFloat(document.getElementById('wastage-qty').value);
+        const reason = document.getElementById('wastage-reason').value.trim();
+
+        if (isNaN(ingId) || isNaN(qty) || qty <= 0) {
+          showToast('Please specify valid wasted quantity.', 'error');
+          return;
+        }
+
+        if (isBackendOnline) {
+          try {
+            const res = await fetch(`${BACKEND_BASE_URL}/api/inventory/wastage`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...getHeaders()
+              },
+              body: JSON.stringify({ master_ingredient_id: ingId, quantity_wasted: qty, reason })
+            });
+
+            if (res.ok) {
+              showToast('Successfully logged stock wastage & updated inventory');
+              document.getElementById('wastage-qty').value = '';
+              document.getElementById('wastage-reason').value = '';
+              await refreshData();
+            } else {
+              showToast('Failed to log wastage', 'error');
+            }
+          } catch (e) {
+            console.error(e);
+            showToast('Connection error logging wastage', 'error');
+          }
+        } else {
+          // Sandbox local deduction
+          const ing = localIngredients.find(i => i.id === ingId);
+          if (ing) {
+            ing.current_stock = Math.max(0.0, ing.current_stock - qty);
+            showToast(`[Sandbox] Wasted stock subtracted`);
+            document.getElementById('wastage-qty').value = '';
+            document.getElementById('wastage-reason').value = '';
+            renderInventory();
+          }
+        }
+      });
+    }
+
+    // Set up signup & login overlay listeners
+    function setupAuthFormListeners() {
+      const loginTab = document.getElementById('auth-login-tab');
+      const signupTab = document.getElementById('auth-signup-tab');
+      const loginForm = document.getElementById('login-form');
+      const signupForm = document.getElementById('signup-form');
+
+      loginTab.addEventListener('click', () => {
+        loginTab.className = "text-emerald-500 font-bold border-b-2 border-emerald-500 pb-1";
+        signupTab.className = "text-charcoal-400 hover:text-charcoal-100 pb-1";
+        loginForm.classList.remove('hidden');
+        signupForm.classList.add('hidden');
+      });
+
+      signupTab.addEventListener('click', () => {
+        signupTab.className = "text-emerald-500 font-bold border-b-2 border-emerald-500 pb-1";
+        loginTab.className = "text-charcoal-400 hover:text-charcoal-100 pb-1";
+        signupForm.classList.remove('hidden');
+        loginForm.classList.add('hidden');
+      });
+
+      // Submit Login
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value.trim();
+
+        if (isBackendOnline) {
+          try {
+            const res = await fetch(`${BACKEND_BASE_URL}/api/auth/login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, password })
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              localStorage.setItem('rk_token', data.access_token);
+              showToast('Authentication success');
+              window.location.reload();
+            } else {
+              const err = await res.json();
+              showToast(err.detail || 'Login failed. Incorrect details.', 'error');
+            }
+          } catch (e) {
+            console.error(e);
+            showToast('Connection error to auth API', 'error');
+          }
+        } else {
+          // Offline Sandbox bypass token
+          const dummyPayload = {
+            sub: email,
+            user_id: 1,
+            tenant_id: 1,
+            exp: Math.floor(Date.now() / 1000) + 86400
+          };
+          const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+          const payload = btoa(JSON.stringify(dummyPayload));
+          const signature = 'sandbox_sig';
+          const token = `${header}.${payload}.${signature}`;
+          
+          localStorage.setItem('rk_token', token);
+          showToast('[Sandbox] Bypassed auth via dummy JWT token');
+          window.location.reload();
+        }
+      });
+
+      // Submit Signup
+      signupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const restaurant_name = document.getElementById('signup-restaurant').value.trim();
+        const name = document.getElementById('signup-name').value.trim();
+        const email = document.getElementById('signup-email').value.trim();
+        const password = document.getElementById('signup-password').value.trim();
+
+        if (isBackendOnline) {
+          try {
+            const res = await fetch(`${BACKEND_BASE_URL}/api/auth/signup`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name, email, password, restaurant_name })
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              localStorage.setItem('rk_token', data.access_token);
+              showToast('Tenant Profile created successfully');
+              window.location.reload();
+            } else {
+              const err = await res.json();
+              showToast(err.detail || 'Registration failed.', 'error');
+            }
+          } catch (e) {
+            console.error(e);
+            showToast('Connection error to registration API', 'error');
+          }
+        } else {
+          // Offline Signup bypass
+          const dummyPayload = {
+            sub: email,
+            user_id: 1,
+            tenant_id: 1,
+            exp: Math.floor(Date.now() / 1000) + 86400
+          };
+          const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+          const payload = btoa(JSON.stringify(dummyPayload));
+          const signature = 'sandbox_sig';
+          const token = `${header}.${payload}.${signature}`;
+          
+          localStorage.setItem('rk_token', token);
+          showToast('[Sandbox] Established profile locally');
+          window.location.reload();
+        }
+      });
     }
 
   })();

@@ -129,6 +129,183 @@ class TestRestoKeeperAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "success")
 
+    def test_auth_signup_and_login(self):
+        """Test SaaS user registration and login JWT flow."""
+        signup_payload = {
+            "name": "Test Chef",
+            "email": "chef_test@bistro.com",
+            "password": "password123",
+            "restaurant_name": "Test Bistro Cafe"
+        }
+        # Clear existing user if already exists from previous runs
+        from app.database import SessionLocal
+        from app.models import User
+        db = SessionLocal()
+        try:
+            old_user = db.query(User).filter(User.email == signup_payload["email"]).first()
+            if old_user:
+                db.delete(old_user)
+                db.commit()
+        finally:
+            db.close()
+
+        # Signup
+        response = self.client.post("/api/auth/signup", json=signup_payload)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("access_token", data)
+        self.assertEqual(data["token_type"], "bearer")
+        token = data["access_token"]
+
+        # Login
+        login_payload = {
+            "email": "chef_test@bistro.com",
+            "password": "password123"
+        }
+        response = self.client.post("/api/auth/login", json=login_payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("access_token", response.json())
+
+        # Test authenticated call
+        headers = {"Authorization": f"Bearer {token}"}
+        response = self.client.get("/api/ingredients", headers=headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(len(response.json()), 0)
+
+    def test_menu_item_and_recipe_creation(self):
+        """Test creating a menu item mapped to recipe ingredients."""
+        # 1. Fetch ingredients to map
+        ing_res = self.client.get("/api/ingredients", headers={"X-Tenant-ID": "1"})
+        ingredients = ing_res.json()
+        dal_id = next(ing["id"] for ing in ingredients if ing["item_name"] == "Dal")
+        
+        # 2. Create menu item with Dal requirement
+        menu_payload = {
+            "name": "Super Dal Tadka",
+            "price": 8.99,
+            "recipes": [
+                {"ingredient_id": dal_id, "quantity_required": 0.3}
+            ]
+        }
+        
+        # Clean up existing menu item if exists
+        from app.database import SessionLocal
+        from app.models import MenuItem
+        db = SessionLocal()
+        try:
+            db.query(MenuItem).filter(MenuItem.name == "Super Dal Tadka").delete()
+            db.commit()
+        finally:
+            db.close()
+
+        response = self.client.post("/api/menu", json=menu_payload, headers={"X-Tenant-ID": "1"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["name"], "Super Dal Tadka")
+        self.assertEqual(len(data["recipes"]), 1)
+        self.assertEqual(data["recipes"][0]["ingredient_id"], dal_id)
+        self.assertEqual(data["recipes"][0]["quantity_required"], 0.3)
+
+    def test_sale_deduction_fifo(self):
+        """Test POS sales stock deduction with FIFO batching."""
+        # 1. Fetch current ingredient list
+        ing_res = self.client.get("/api/ingredients", headers={"X-Tenant-ID": "1"})
+        ingredients = ing_res.json()
+        atta_item = next(ing for ing in ingredients if ing["item_name"] == "Atta")
+        atta_id = atta_item["id"]
+        
+        # Clear existing batches
+        from app.database import SessionLocal
+        from app.models import StockBatch, MenuItem
+        db = SessionLocal()
+        try:
+            db.query(StockBatch).filter(StockBatch.master_ingredient_id == atta_id).delete()
+            db.query(MenuItem).filter(MenuItem.name == "Bistro Roti").delete()
+            db.commit()
+        finally:
+            db.close()
+
+        # 2. Add two stock batches for Atta
+        from datetime import datetime, timedelta
+        exp1 = (datetime.now() + timedelta(days=2)).isoformat()
+        exp2 = (datetime.now() + timedelta(days=10)).isoformat()
+        
+        batch1_payload = {
+            "master_ingredient_id": atta_id,
+            "quantity": 5.0,
+            "expiry_date": exp1
+        }
+        batch2_payload = {
+            "master_ingredient_id": atta_id,
+            "quantity": 10.0,
+            "expiry_date": exp2
+        }
+        self.client.post("/api/inventory/batches", json=batch1_payload, headers={"X-Tenant-ID": "1"})
+        self.client.post("/api/inventory/batches", json=batch2_payload, headers={"X-Tenant-ID": "1"})
+
+        # Verify batches are listed
+        batches_res = self.client.get("/api/inventory/batches", headers={"X-Tenant-ID": "1"})
+        self.assertEqual(batches_res.status_code, 200)
+        atta_batches = [b for b in batches_res.json() if b["master_ingredient_id"] == atta_id]
+        self.assertEqual(len(atta_batches), 2)
+
+        # 3. Create a menu item using Atta
+        menu_payload = {
+            "name": "Bistro Roti",
+            "price": 1.50,
+            "recipes": [
+                {"ingredient_id": atta_id, "quantity_required": 1.0}
+            ]
+        }
+        menu_res = self.client.post("/api/menu", json=menu_payload, headers={"X-Tenant-ID": "1"})
+        menu_item_id = menu_res.json()["id"]
+
+        # Get old stock level
+        old_stock = self.client.get("/api/ingredients", headers={"X-Tenant-ID": "1"}).json()
+        atta_old_stock = next(ing["current_stock"] for ing in old_stock if ing["id"] == atta_id)
+
+        # 4. Log a sale of 6 Bistro Roti (requires 6.0 units of Atta)
+        # This should fully consume batch 1 (5.0 units) and take 1.0 unit from batch 2, leaving 9.0 units in batch 2
+        sale_payload = {
+            "menu_item_id": menu_item_id,
+            "quantity_sold": 6
+        }
+        sale_res = self.client.post("/api/sales", json=sale_payload, headers={"X-Tenant-ID": "1"})
+        self.assertEqual(sale_res.status_code, 200)
+
+        # 5. Verify batch 1 is deleted and batch 2 quantity is 9.0
+        batches_res = self.client.get("/api/inventory/batches", headers={"X-Tenant-ID": "1"})
+        atta_batches_after = [b for b in batches_res.json() if b["master_ingredient_id"] == atta_id]
+        self.assertEqual(len(atta_batches_after), 1)
+        self.assertEqual(atta_batches_after[0]["quantity"], 9.0)
+
+        # Verify master stock decreased by 6.0
+        new_stock_res = self.client.get("/api/ingredients", headers={"X-Tenant-ID": "1"})
+        atta_new_stock = next(ing["current_stock"] for ing in new_stock_res.json() if ing["id"] == atta_id)
+        self.assertAlmostEqual(atta_new_stock, atta_old_stock - 6.0)
+
+    def test_wastage_logging(self):
+        """Test logging wastage for an ingredient."""
+        ing_res = self.client.get("/api/ingredients", headers={"X-Tenant-ID": "1"})
+        ingredients = ing_res.json()
+        dal_item = next(ing for ing in ingredients if ing["item_name"] == "Dal")
+        dal_id = dal_item["id"]
+        old_stock = dal_item["current_stock"]
+
+        wastage_payload = {
+            "master_ingredient_id": dal_id,
+            "quantity_wasted": 1.5,
+            "reason": "Water damage"
+        }
+        response = self.client.post("/api/inventory/wastage", json=wastage_payload, headers={"X-Tenant-ID": "1"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["quantity_wasted"], 1.5)
+        
+        # Verify master stock level decreased
+        new_ing_res = self.client.get("/api/ingredients", headers={"X-Tenant-ID": "1"})
+        dal_new_stock = next(ing["current_stock"] for ing in new_ing_res.json() if ing["id"] == dal_id)
+        self.assertAlmostEqual(dal_new_stock, max(0.0, old_stock - 1.5))
+
 
 if __name__ == "__main__":
     unittest.main()

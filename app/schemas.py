@@ -112,3 +112,101 @@ class DraftOrdersResponse(BaseModel):
 
 class VoiceTextPayload(BaseModel):
     text: str
+
+
+# Authentication Schemas
+class UserSignup(BaseModel):
+    name: str
+    email: str
+    password: str
+    restaurant_name: str
+
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+    user_id: Optional[int] = None
+    tenant_id: Optional[int] = None
+
+
+# Recipe & Menu Schemas
+class RecipeRequirementBase(BaseModel):
+    ingredient_id: int
+    quantity_required: float
+
+
+class RecipeRequirementResponse(RecipeRequirementBase):
+    id: int
+    menu_item_id: int
+    class Config:
+        from_attributes = True
+
+
+class MenuItemBase(BaseModel):
+    name: str
+    price: float
+
+
+class MenuItemCreate(MenuItemBase):
+    recipes: List[RecipeRequirementBase]
+
+
+class MenuItemResponse(MenuItemBase):
+    id: int
+    tenant_id: int
+    recipes: List[RecipeRequirementResponse] = []
+    class Config:
+        from_attributes = True
+
+
+# Sales Schemas
+class SaleCreate(BaseModel):
+    menu_item_id: int
+    quantity_sold: int
+
+
+class SaleResponse(BaseModel):
+    id: int
+    tenant_id: int
+    menu_item_id: int
+    quantity_sold: int
+    sold_at: datetime
+    class Config:
+        from_attributes = True
+
+
+# Stock Batch & Expiry Schemas
+class StockBatchBase(BaseModel):
+    master_ingredient_id: int
+    quantity: float
+    expiry_date: datetime
+
+
+class StockBatchResponse(StockBatchBase):
+    id: int
+    received_date: datetime
+    class Config:
+        from_attributes = True
+
+
+# Wastage Schemas
+class WastageCreate(BaseModel):
+    master_ingredient_id: int
+    quantity_wasted: float
+    reason: Optional[str] = None
+
+
+class WastageResponse(WastageCreate):
+    id: int
+    logged_at: datetime
+    class Config:
+        from_attributes = True

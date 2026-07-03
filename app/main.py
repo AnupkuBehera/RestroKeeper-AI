@@ -1,15 +1,24 @@
 import os
 import logging
+import base64
+import hmac
+import hashlib
+import json
+import time
+from datetime import datetime, timedelta
 from fastapi import FastAPI, Depends, UploadFile, File, Form, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from typing import List
 
 from .database import engine, Base, get_db
-from .models import Tenant, User, MasterIngredient, StockHistoryLog
+from .models import Tenant, User, MasterIngredient, StockHistoryLog, MenuItem, RecipeRequirement, StockBatch, SaleLog, WastageLog
 from .schemas import (
     VoiceUploadResponse, InvoiceUploadResponse, DraftOrdersResponse, 
-    IngredientResponse, IngredientBase, IngredientUpdatePayload, VoiceTextPayload
+    IngredientResponse, IngredientBase, IngredientUpdatePayload, VoiceTextPayload,
+    UserSignup, UserLogin, Token, TokenData, MenuItemCreate, MenuItemResponse,
+    SaleCreate, SaleResponse, StockBatchBase, StockBatchResponse, WastageCreate, WastageResponse
 )
 from .services.audio import process_voice_inventory
 from .services.vision import process_invoice_ocr
@@ -22,6 +31,99 @@ from .services.sheets import (
     log_audit_to_sheet
 )
 
+# JWT Auth configurations
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-restokeeper-key-9812")
+security = HTTPBearer(auto_error=False)
+
+def hash_password(password: str) -> str:
+    """Hash password using PBKDF2 with SHA256."""
+    salt = "rk_salt_"
+    hashed = hashlib.pbkdf2_hmac(
+        'sha256',
+        password.encode('utf-8'),
+        salt.encode('utf-8'),
+        100000
+    )
+    return hashed.hex()
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify password by comparing hashes."""
+    if not hashed_password:
+        return False
+    return hash_password(plain_password) == hashed_password
+
+def create_access_token(data: dict, expires_in: int = 86400) -> str:
+    """Create a signed JWT token."""
+    header = {"alg": "HS256", "typ": "JWT"}
+    payload = data.copy()
+    payload["exp"] = int(time.time()) + expires_in
+    
+    # Base64url encode header and payload
+    header_b64 = base64.urlsafe_b64encode(json.dumps(header).encode()).decode().rstrip("=")
+    payload_b64 = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
+    
+    # Sign
+    signature_base = f"{header_b64}.{payload_b64}".encode()
+    signature = hmac.new(SECRET_KEY.encode(), signature_base, hashlib.sha256).digest()
+    signature_b64 = base64.urlsafe_b64encode(signature).decode().rstrip("=")
+    
+    return f"{header_b64}.{payload_b64}.{signature_b64}"
+
+def decode_access_token(token: str) -> dict:
+    """Decode and verify a JWT token."""
+    try:
+        parts = token.split(".")
+        if len(parts) != 3:
+            return None
+        header_b64, payload_b64, signature_b64 = parts
+        
+        # Verify signature
+        signature_base = f"{header_b64}.{payload_b64}".encode()
+        expected_sig = hmac.new(SECRET_KEY.encode(), signature_base, hashlib.sha256).digest()
+        sig_padding = len(signature_b64) % 4
+        sig_b64_padded = signature_b64 + ("=" * (4 - sig_padding) if sig_padding else "")
+        sig_bytes = base64.urlsafe_b64decode(sig_b64_padded)
+        
+        if not hmac.compare_digest(sig_bytes, expected_sig):
+            return None
+            
+        # Decode payload
+        payload_padding = len(payload_b64) % 4
+        payload_b64_padded = payload_b64 + ("=" * (4 - payload_padding) if payload_padding else "")
+        payload = json.loads(base64.urlsafe_b64decode(payload_b64_padded).decode())
+        
+        # Verify expiration
+        if payload.get("exp", 0) < time.time():
+            return None
+            
+        return payload
+    except Exception:
+        return None
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+) -> TokenData:
+    """
+    FastAPI dependency to extract JWT and return user and tenant context.
+    Falls back to a default sandbox tenant context if no credentials are provided,
+    ensuring local backward compatibility.
+    """
+    default_context = TokenData(email="manager@restokeeper.com", user_id=1, tenant_id=1)
+    if not credentials:
+        return default_context
+        
+    token = credentials.credentials
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired access token")
+        
+    return TokenData(
+        email=payload.get("sub"),
+        user_id=payload.get("user_id"),
+        tenant_id=payload.get("tenant_id")
+    )
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -29,10 +131,17 @@ logger = logging.getLogger(__name__)
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
-def get_current_tenant_id(x_tenant_id: str = Header(default="1")) -> int:
+def get_current_tenant_id(
+    x_tenant_id: str = Header(default="1"),
+    current_user: TokenData = Depends(get_current_user)
+) -> int:
     """
-    Dynamic dependency to resolve the current tenant_id based on X-Tenant-ID header.
+    Resolves tenant_id from JWT if present, falling back to X-Tenant-ID header.
     """
+    # If the user authenticated via JWT and it's not the default fallback tenant, use that
+    if current_user.email != "manager@restokeeper.com" or x_tenant_id == "1":
+        return current_user.tenant_id
+        
     try:
         return int(x_tenant_id)
     except ValueError:
@@ -185,6 +294,371 @@ def read_root():
         "service": "RestoKeeper AI Backend",
         "database": str(engine.url).split("@")[-1]  # Hide credentials, show DB host
     }
+
+
+@app.post("/api/auth/signup", response_model=Token)
+def signup(payload: UserSignup, db: Session = Depends(get_db)):
+    # Check if email is already taken
+    existing_user = db.query(User).filter(User.email == payload.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email is already registered")
+        
+    # 1. Create a new Tenant
+    new_tenant = Tenant(restaurant_name=payload.restaurant_name)
+    db.add(new_tenant)
+    db.commit()
+    db.refresh(new_tenant)
+    
+    # 2. Create the User
+    hashed_pwd = hash_password(payload.password)
+    new_user = User(
+        tenant_id=new_tenant.id,
+        name=payload.name,
+        email=payload.email,
+        role="manager",
+        password_hash=hashed_pwd
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    # 3. Seed new ingredients for this new tenant
+    default_ingredients = [
+        MasterIngredient(
+            tenant_id=new_tenant.id,
+            SKU_code="SKU-ATT-01",
+            item_name="Atta",
+            current_stock=2.0,
+            safety_par_level=5.0,
+            unit_type="bags",
+            cost_per_unit=12.00,
+            vendor_name="Desi Grains Co."
+        ),
+        MasterIngredient(
+            tenant_id=new_tenant.id,
+            SKU_code="SKU-DAL-02",
+            item_name="Dal",
+            current_stock=8.0,
+            safety_par_level=10.0,
+            unit_type="kg",
+            cost_per_unit=4.50,
+            vendor_name="Desi Grains Co."
+        ),
+        MasterIngredient(
+            tenant_id=new_tenant.id,
+            SKU_code="SKU-RIC-03",
+            item_name="Rice",
+            current_stock=3.0,
+            safety_par_level=8.0,
+            unit_type="bags",
+            cost_per_unit=18.00,
+            vendor_name="Desi Grains Co."
+        ),
+        MasterIngredient(
+            tenant_id=new_tenant.id,
+            SKU_code="SKU-ONN-04",
+            item_name="Onions",
+            current_stock=18.0,
+            safety_par_level=15.0,
+            unit_type="kg",
+            cost_per_unit=2.50,
+            vendor_name="Fresh Produce Co."
+        ),
+        MasterIngredient(
+            tenant_id=new_tenant.id,
+            SKU_code="SKU-POT-05",
+            item_name="Potato",
+            current_stock=12.0,
+            safety_par_level=20.0,
+            unit_type="kg",
+            cost_per_unit=1.80,
+            vendor_name="Fresh Produce Co."
+        ),
+        MasterIngredient(
+            tenant_id=new_tenant.id,
+            SKU_code="SKU-SUG-06",
+            item_name="Sugar",
+            current_stock=4.0,
+            safety_par_level=10.0,
+            unit_type="kg",
+            cost_per_unit=3.00,
+            vendor_name="Sysco"
+        ),
+    ]
+    for ing in default_ingredients:
+        db.add(ing)
+    db.commit()
+    
+    # 4. Generate JWT
+    token_data = {
+        "sub": new_user.email,
+        "user_id": new_user.id,
+        "tenant_id": new_tenant.id
+    }
+    token = create_access_token(token_data)
+    return {"access_token": token, "token_type": "bearer"}
+
+
+@app.post("/api/auth/login", response_model=Token)
+def login(payload: UserLogin, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user or not verify_password(payload.password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Incorrect email or password")
+        
+    token_data = {
+        "sub": user.email,
+        "user_id": user.id,
+        "tenant_id": user.tenant_id
+    }
+    token = create_access_token(token_data)
+    return {"access_token": token, "token_type": "bearer"}
+
+
+@app.get("/api/menu", response_model=List[MenuItemResponse])
+def get_menu(
+    tenant_id: int = Depends(get_current_tenant_id),
+    db: Session = Depends(get_db)
+):
+    """Fetch all menu items along with their recipe requirements."""
+    items = db.query(MenuItem).filter(MenuItem.tenant_id == tenant_id).all()
+    return items
+
+
+@app.post("/api/menu", response_model=MenuItemResponse)
+def create_menu_item(
+    payload: MenuItemCreate,
+    tenant_id: int = Depends(get_current_tenant_id),
+    db: Session = Depends(get_db)
+):
+    """Create a menu item and define its recipe requirements."""
+    # Check if menu item already exists
+    existing = db.query(MenuItem).filter(
+        MenuItem.tenant_id == tenant_id,
+        MenuItem.name == payload.name
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Menu item already exists")
+        
+    new_item = MenuItem(
+        tenant_id=tenant_id,
+        name=payload.name,
+        price=payload.price
+    )
+    db.add(new_item)
+    db.commit()
+    db.refresh(new_item)
+    
+    # Add recipe requirements
+    for recipe_req in payload.recipes:
+        ing = db.query(MasterIngredient).filter(
+            MasterIngredient.id == recipe_req.ingredient_id,
+            MasterIngredient.tenant_id == tenant_id
+        ).first()
+        if not ing:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Ingredient ID {recipe_req.ingredient_id} not found"
+            )
+            
+        req = RecipeRequirement(
+            menu_item_id=new_item.id,
+            ingredient_id=recipe_req.ingredient_id,
+            quantity_required=recipe_req.quantity_required
+        )
+        db.add(req)
+    db.commit()
+    db.refresh(new_item)
+    return new_item
+
+
+@app.post("/api/sales", response_model=SaleResponse)
+def log_sale(
+    payload: SaleCreate,
+    tenant_id: int = Depends(get_current_tenant_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Logs menu item sales, deducts raw ingredients from batches using FIFO, 
+    updates master stock level, and syncs to Google Sheets.
+    """
+    menu_item = db.query(MenuItem).filter(
+        MenuItem.id == payload.menu_item_id,
+        MenuItem.tenant_id == tenant_id
+    ).first()
+    if not menu_item:
+        raise HTTPException(status_code=404, detail="Menu item not found")
+        
+    for recipe_req in menu_item.recipes:
+        total_needed = recipe_req.quantity_required * payload.quantity_sold
+        ing = recipe_req.ingredient
+        
+        remaining = total_needed
+        batches = db.query(StockBatch).filter(
+            StockBatch.master_ingredient_id == ing.id
+        ).order_by(StockBatch.expiry_date.asc()).all()
+        
+        for batch in batches:
+            if remaining <= 0:
+                break
+            if batch.quantity >= remaining:
+                batch.quantity -= remaining
+                remaining = 0.0
+                db.add(batch)
+            else:
+                remaining -= batch.quantity
+                db.delete(batch)
+                
+        ing.current_stock = max(0.0, ing.current_stock - total_needed)
+        db.add(ing)
+        
+        history_log = StockHistoryLog(
+            master_ingredient_id=ing.id,
+            quantity_changed=-total_needed,
+            change_source="sales_deduction"
+        )
+        db.add(history_log)
+        
+        update_sheet_ingredient_stock(ing.SKU_code, ing.current_stock)
+        
+    new_sale = SaleLog(
+        tenant_id=tenant_id,
+        menu_item_id=payload.menu_item_id,
+        quantity_sold=payload.quantity_sold
+    )
+    db.add(new_sale)
+    db.commit()
+    db.refresh(new_sale)
+    
+    return new_sale
+
+
+@app.post("/api/inventory/batches", response_model=StockBatchResponse)
+def create_stock_batch(
+    payload: StockBatchBase,
+    tenant_id: int = Depends(get_current_tenant_id),
+    db: Session = Depends(get_db)
+):
+    """Register a new stock batch for an ingredient, updating its master stock level."""
+    ing = db.query(MasterIngredient).filter(
+        MasterIngredient.id == payload.master_ingredient_id,
+        MasterIngredient.tenant_id == tenant_id
+    ).first()
+    if not ing:
+        raise HTTPException(status_code=404, detail="Ingredient not found")
+        
+    batch = StockBatch(
+        master_ingredient_id=payload.master_ingredient_id,
+        quantity=payload.quantity,
+        expiry_date=payload.expiry_date
+    )
+    db.add(batch)
+    
+    # Update master stock
+    ing.current_stock += payload.quantity
+    db.add(ing)
+    
+    # Log stock history
+    history_log = StockHistoryLog(
+        master_ingredient_id=ing.id,
+        quantity_changed=payload.quantity,
+        change_source="batch_received"
+    )
+    db.add(history_log)
+    db.commit()
+    db.refresh(batch)
+    
+    # Sync to Sheets
+    update_sheet_ingredient_stock(ing.SKU_code, ing.current_stock)
+    
+    return batch
+
+
+@app.get("/api/inventory/batches", response_model=List[StockBatchResponse])
+def get_stock_batches(
+    tenant_id: int = Depends(get_current_tenant_id),
+    db: Session = Depends(get_db)
+):
+    """List all stock batches for the current tenant's ingredients."""
+    batches = db.query(StockBatch).join(MasterIngredient).filter(
+        MasterIngredient.tenant_id == tenant_id
+    ).all()
+    return batches
+
+
+@app.get("/api/inventory/expiry-alerts", response_model=List[StockBatchResponse])
+def get_expiry_alerts(
+    tenant_id: int = Depends(get_current_tenant_id),
+    db: Session = Depends(get_db)
+):
+    """Fetch ingredient batches expiring within the next 7 days."""
+    threshold = datetime.now() + timedelta(days=7)
+    batches = db.query(StockBatch).join(MasterIngredient).filter(
+        MasterIngredient.tenant_id == tenant_id,
+        StockBatch.expiry_date <= threshold,
+        StockBatch.quantity > 0.0
+    ).order_by(StockBatch.expiry_date.asc()).all()
+    return batches
+
+
+@app.post("/api/inventory/wastage", response_model=WastageResponse)
+def log_wastage(
+    payload: WastageCreate,
+    tenant_id: int = Depends(get_current_tenant_id),
+    db: Session = Depends(get_db)
+):
+    """Logs spoiled or wasted stock, deducting it from batches via FIFO and syncing to Sheets."""
+    ing = db.query(MasterIngredient).filter(
+        MasterIngredient.id == payload.master_ingredient_id,
+        MasterIngredient.tenant_id == tenant_id
+    ).first()
+    if not ing:
+        raise HTTPException(status_code=404, detail="Ingredient not found")
+        
+    qty = payload.quantity_wasted
+    
+    # Deduct from batches using FIFO
+    remaining = qty
+    batches = db.query(StockBatch).filter(
+        StockBatch.master_ingredient_id == ing.id
+    ).order_by(StockBatch.expiry_date.asc()).all()
+    
+    for batch in batches:
+        if remaining <= 0:
+            break
+        if batch.quantity >= remaining:
+            batch.quantity -= remaining
+            remaining = 0.0
+            db.add(batch)
+        else:
+            remaining -= batch.quantity
+            db.delete(batch)
+            
+    # Deduct from master stock
+    ing.current_stock = max(0.0, ing.current_stock - qty)
+    db.add(ing)
+    
+    # Log stock history
+    history_log = StockHistoryLog(
+        master_ingredient_id=ing.id,
+        quantity_changed=-qty,
+        change_source="wastage"
+    )
+    db.add(history_log)
+    
+    # Create wastage log entry
+    wastage = WastageLog(
+        master_ingredient_id=payload.master_ingredient_id,
+        quantity_wasted=qty,
+        reason=payload.reason
+    )
+    db.add(wastage)
+    db.commit()
+    db.refresh(wastage)
+    
+    # Sync to Sheets
+    update_sheet_ingredient_stock(ing.SKU_code, ing.current_stock)
+    
+    return wastage
 
 
 @app.get("/api/ingredients", response_model=List[IngredientResponse])
