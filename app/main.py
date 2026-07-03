@@ -131,6 +131,19 @@ logger = logging.getLogger(__name__)
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
+# Dynamic schema migration to add password_hash column to existing users table
+from sqlalchemy import text
+db_init = next(get_db())
+try:
+    db_init.execute(text("ALTER TABLE users ADD COLUMN password_hash VARCHAR"))
+    db_init.commit()
+    logger.info("Successfully migrated users table: added password_hash column.")
+except Exception as e:
+    db_init.rollback()
+    logger.info(f"Alter table users skipped (column likely already exists): {e}")
+finally:
+    db_init.close()
+
 def get_current_tenant_id(
     x_tenant_id: str = Header(default="1"),
     current_user: TokenData = Depends(get_current_user)
