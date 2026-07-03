@@ -1293,8 +1293,10 @@ import Layout from '../layouts/Layout.astro';
         }
       };
 
-      document.getElementById('demo-reset-btn').addEventListener('click', triggerReset);
-      document.getElementById('demo-reset-btn-v1').addEventListener('click', triggerReset);
+      const resetBtn = document.getElementById('demo-reset-btn');
+      if (resetBtn) resetBtn.addEventListener('click', triggerReset);
+      const resetBtnV1 = document.getElementById('demo-reset-btn-v1');
+      if (resetBtnV1) resetBtnV1.addEventListener('click', triggerReset);
 
       // Clear Stocks event
       document.getElementById('clear-stocks-btn').addEventListener('click', async () => {
