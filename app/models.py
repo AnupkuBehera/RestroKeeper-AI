@@ -42,6 +42,7 @@ class MasterIngredient(Base):
     unit_type = Column(String, nullable=False)  # bags, boxes, kg, blocks, etc.
     cost_per_unit = Column(Float, default=0.0)
     vendor_name = Column(String, nullable=False, default="Generic Supplier")  # Crucial for PO grouping
+    category = Column(String, nullable=True, default="Other")
 
     tenant = relationship("Tenant", back_populates="ingredients")
     history_logs = relationship("StockHistoryLog", back_populates="ingredient", cascade="all, delete-orphan")

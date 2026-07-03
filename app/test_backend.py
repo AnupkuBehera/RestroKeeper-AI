@@ -32,6 +32,7 @@ class TestRestoKeeperAPI(unittest.TestCase):
         self.assertIn("current_stock", first_item)
         self.assertIn("safety_par_level", first_item)
         self.assertIn("cost_per_unit", first_item)
+        self.assertIn("category", first_item)
 
     def test_get_ingredients_invalid_tenant(self):
         """Test that invalid tenant headers fail validation."""
@@ -109,13 +110,15 @@ class TestRestoKeeperAPI(unittest.TestCase):
             "safety_par_level": 5.0,
             "unit_type": "boxes",
             "cost_per_unit": 18.50,
-            "vendor_name": "Fresh Produce Co."
+            "vendor_name": "Fresh Produce Co.",
+            "category": "Fruits"
         }
         response = self.client.post("/api/ingredients", json=payload, headers={"X-Tenant-ID": "1"})
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["item_name"], "Avocado")
         self.assertEqual(data["SKU_code"], "SKU-AVO-99")
+        self.assertEqual(data["category"], "Fruits")
 
     def test_clear_all_ingredient_stocks(self):
         """Test resetting all current stock values to 0.0."""

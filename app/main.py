@@ -141,6 +141,15 @@ try:
 except Exception as e:
     db_init.rollback()
     logger.info(f"Alter table users skipped (column likely already exists): {e}")
+
+# Dynamic schema migration to add category column to existing master_ingredients table
+try:
+    db_init.execute(text("ALTER TABLE master_ingredients ADD COLUMN category VARCHAR"))
+    db_init.commit()
+    logger.info("Successfully migrated master_ingredients table: added category column.")
+except Exception as e:
+    db_init.rollback()
+    logger.info(f"Alter table master_ingredients skipped (column likely already exists): {e}")
 finally:
     db_init.close()
 
@@ -159,6 +168,78 @@ def get_current_tenant_id(
         return int(x_tenant_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="X-Tenant-ID header must be an integer")
+
+def get_default_ingredients(tenant_id: int) -> List[MasterIngredient]:
+    """Generates the seeded list of standard ingredients with category mappings."""
+    return [
+        MasterIngredient(
+            tenant_id=tenant_id,
+            SKU_code="SKU-ATT-01",
+            item_name="Atta",
+            current_stock=2.0,
+            safety_par_level=5.0,
+            unit_type="bags",
+            cost_per_unit=12.00,
+            vendor_name="Desi Grains Co.",
+            category="Dry Ration"
+        ),
+        MasterIngredient(
+            tenant_id=tenant_id,
+            SKU_code="SKU-DAL-02",
+            item_name="Dal",
+            current_stock=8.0,
+            safety_par_level=10.0,
+            unit_type="kg",
+            cost_per_unit=4.50,
+            vendor_name="Desi Grains Co.",
+            category="Dry Ration"
+        ),
+        MasterIngredient(
+            tenant_id=tenant_id,
+            SKU_code="SKU-RIC-03",
+            item_name="Rice",
+            current_stock=3.0,
+            safety_par_level=8.0,
+            unit_type="bags",
+            cost_per_unit=18.00,
+            vendor_name="Desi Grains Co.",
+            category="Dry Ration"
+        ),
+        MasterIngredient(
+            tenant_id=tenant_id,
+            SKU_code="SKU-ONN-04",
+            item_name="Onions",
+            current_stock=18.0,
+            safety_par_level=15.0,
+            unit_type="kg",
+            cost_per_unit=2.50,
+            vendor_name="Fresh Produce Co.",
+            category="Vegetables"
+        ),
+        MasterIngredient(
+            tenant_id=tenant_id,
+            SKU_code="SKU-POT-05",
+            item_name="Potato",
+            current_stock=12.0,
+            safety_par_level=20.0,
+            unit_type="kg",
+            cost_per_unit=1.80,
+            vendor_name="Fresh Produce Co.",
+            category="Vegetables"
+        ),
+        MasterIngredient(
+            tenant_id=tenant_id,
+            SKU_code="SKU-SUG-06",
+            item_name="Sugar",
+            current_stock=4.0,
+            safety_par_level=10.0,
+            unit_type="kg",
+            cost_per_unit=3.00,
+            vendor_name="Sysco",
+            category="Dry Ration"
+        ),
+    ]
+
 
 app = FastAPI(
     title="RestoKeeper AI Backend",
@@ -222,68 +303,7 @@ def seed_database_if_empty(db: Session):
         db.query(MasterIngredient).filter(MasterIngredient.tenant_id == tenant_id).delete()
         db.commit()
         
-        default_ingredients = [
-            MasterIngredient(
-                tenant_id=tenant_id,
-                SKU_code="SKU-ATT-01",
-                item_name="Atta",
-                current_stock=2.0,
-                safety_par_level=5.0,
-                unit_type="bags",
-                cost_per_unit=12.00,
-                vendor_name="Desi Grains Co."
-            ),
-            MasterIngredient(
-                tenant_id=tenant_id,
-                SKU_code="SKU-DAL-02",
-                item_name="Dal",
-                current_stock=8.0,
-                safety_par_level=10.0,
-                unit_type="kg",
-                cost_per_unit=4.50,
-                vendor_name="Desi Grains Co."
-            ),
-            MasterIngredient(
-                tenant_id=tenant_id,
-                SKU_code="SKU-RIC-03",
-                item_name="Rice",
-                current_stock=3.0,
-                safety_par_level=8.0,
-                unit_type="bags",
-                cost_per_unit=18.00,
-                vendor_name="Desi Grains Co."
-            ),
-            MasterIngredient(
-                tenant_id=tenant_id,
-                SKU_code="SKU-ONN-04",
-                item_name="Onions",
-                current_stock=18.0,
-                safety_par_level=15.0,
-                unit_type="kg",
-                cost_per_unit=2.50,
-                vendor_name="Fresh Produce Co."
-            ),
-            MasterIngredient(
-                tenant_id=tenant_id,
-                SKU_code="SKU-POT-05",
-                item_name="Potato",
-                current_stock=12.0,
-                safety_par_level=20.0,
-                unit_type="kg",
-                cost_per_unit=1.80,
-                vendor_name="Fresh Produce Co."
-            ),
-            MasterIngredient(
-                tenant_id=tenant_id,
-                SKU_code="SKU-SUG-06",
-                item_name="Sugar",
-                current_stock=4.0,
-                safety_par_level=10.0,
-                unit_type="kg",
-                cost_per_unit=3.00,
-                vendor_name="Sysco"
-            ),
-        ]
+        default_ingredients = get_default_ingredients(tenant_id)
         
         for ing in default_ingredients:
             db.add(ing)
@@ -336,68 +356,7 @@ def signup(payload: UserSignup, db: Session = Depends(get_db)):
     db.refresh(new_user)
     
     # 3. Seed new ingredients for this new tenant
-    default_ingredients = [
-        MasterIngredient(
-            tenant_id=new_tenant.id,
-            SKU_code="SKU-ATT-01",
-            item_name="Atta",
-            current_stock=2.0,
-            safety_par_level=5.0,
-            unit_type="bags",
-            cost_per_unit=12.00,
-            vendor_name="Desi Grains Co."
-        ),
-        MasterIngredient(
-            tenant_id=new_tenant.id,
-            SKU_code="SKU-DAL-02",
-            item_name="Dal",
-            current_stock=8.0,
-            safety_par_level=10.0,
-            unit_type="kg",
-            cost_per_unit=4.50,
-            vendor_name="Desi Grains Co."
-        ),
-        MasterIngredient(
-            tenant_id=new_tenant.id,
-            SKU_code="SKU-RIC-03",
-            item_name="Rice",
-            current_stock=3.0,
-            safety_par_level=8.0,
-            unit_type="bags",
-            cost_per_unit=18.00,
-            vendor_name="Desi Grains Co."
-        ),
-        MasterIngredient(
-            tenant_id=new_tenant.id,
-            SKU_code="SKU-ONN-04",
-            item_name="Onions",
-            current_stock=18.0,
-            safety_par_level=15.0,
-            unit_type="kg",
-            cost_per_unit=2.50,
-            vendor_name="Fresh Produce Co."
-        ),
-        MasterIngredient(
-            tenant_id=new_tenant.id,
-            SKU_code="SKU-POT-05",
-            item_name="Potato",
-            current_stock=12.0,
-            safety_par_level=20.0,
-            unit_type="kg",
-            cost_per_unit=1.80,
-            vendor_name="Fresh Produce Co."
-        ),
-        MasterIngredient(
-            tenant_id=new_tenant.id,
-            SKU_code="SKU-SUG-06",
-            item_name="Sugar",
-            current_stock=4.0,
-            safety_par_level=10.0,
-            unit_type="kg",
-            cost_per_unit=3.00,
-            vendor_name="Sysco"
-        ),
-    ]
+    default_ingredients = get_default_ingredients(new_tenant.id)
     for ing in default_ingredients:
         db.add(ing)
     db.commit()
@@ -732,7 +691,8 @@ def create_ingredient(
         safety_par_level=payload.safety_par_level,
         unit_type=payload.unit_type,
         cost_per_unit=payload.cost_per_unit,
-        vendor_name=payload.vendor_name
+        vendor_name=payload.vendor_name,
+        category=payload.category
     )
     db.add(new_ing)
     db.commit()
@@ -907,68 +867,7 @@ def reset_ingredient_stocks(tenant_id: int = Depends(get_current_tenant_id), db:
             db.delete(ing)
         db.commit()
         
-        default_ingredients = [
-            MasterIngredient(
-                tenant_id=tenant_id,
-                SKU_code="SKU-ATT-01",
-                item_name="Atta",
-                current_stock=2.0,
-                safety_par_level=5.0,
-                unit_type="bags",
-                cost_per_unit=12.00,
-                vendor_name="Desi Grains Co."
-            ),
-            MasterIngredient(
-                tenant_id=tenant_id,
-                SKU_code="SKU-DAL-02",
-                item_name="Dal",
-                current_stock=8.0,
-                safety_par_level=10.0,
-                unit_type="kg",
-                cost_per_unit=4.50,
-                vendor_name="Desi Grains Co."
-            ),
-            MasterIngredient(
-                tenant_id=tenant_id,
-                SKU_code="SKU-RIC-03",
-                item_name="Rice",
-                current_stock=3.0,
-                safety_par_level=8.0,
-                unit_type="bags",
-                cost_per_unit=18.00,
-                vendor_name="Desi Grains Co."
-            ),
-            MasterIngredient(
-                tenant_id=tenant_id,
-                SKU_code="SKU-ONN-04",
-                item_name="Onions",
-                current_stock=18.0,
-                safety_par_level=15.0,
-                unit_type="kg",
-                cost_per_unit=2.50,
-                vendor_name="Fresh Produce Co."
-            ),
-            MasterIngredient(
-                tenant_id=tenant_id,
-                SKU_code="SKU-POT-05",
-                item_name="Potato",
-                current_stock=12.0,
-                safety_par_level=20.0,
-                unit_type="kg",
-                cost_per_unit=1.80,
-                vendor_name="Fresh Produce Co."
-            ),
-            MasterIngredient(
-                tenant_id=tenant_id,
-                SKU_code="SKU-SUG-06",
-                item_name="Sugar",
-                current_stock=4.0,
-                safety_par_level=10.0,
-                unit_type="kg",
-                cost_per_unit=3.00,
-                vendor_name="Sysco"
-            ),
-        ]
+        default_ingredients = get_default_ingredients(tenant_id)
         
         for ing in default_ingredients:
             db.add(ing)
@@ -1011,6 +910,8 @@ def update_ingredient(
         ing.cost_per_unit = payload.cost_per_unit
     if payload.vendor_name is not None:
         ing.vendor_name = payload.vendor_name
+    if payload.category is not None:
+        ing.category = payload.category
         
     db.commit()
     db.refresh(ing)

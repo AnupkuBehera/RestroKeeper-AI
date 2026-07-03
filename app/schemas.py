@@ -36,6 +36,7 @@ class IngredientBase(BaseModel):
     unit_type: str
     cost_per_unit: float
     vendor_name: str
+    category: Optional[str] = "Other"
 
 class IngredientUpdatePayload(BaseModel):
     current_stock: Optional[float] = None
@@ -44,6 +45,7 @@ class IngredientUpdatePayload(BaseModel):
     unit_type: Optional[str] = None
     cost_per_unit: Optional[float] = None
     vendor_name: Optional[str] = None
+    category: Optional[str] = None
 
 class IngredientResponse(IngredientBase):
     id: int

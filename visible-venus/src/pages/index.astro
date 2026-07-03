@@ -250,6 +250,16 @@ import Layout from '../layouts/Layout.astro';
               </div>
             </div>
             <div>
+              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Category</label>
+              <select id="new-ing-category" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none focus:border-emerald-500">
+                <option value="Vegetables">Vegetables</option>
+                <option value="Fruits">Fruits</option>
+                <option value="Dairy">Dairy</option>
+                <option value="Dry Ration">Dry Ration</option>
+                <option value="Other" selected>Other</option>
+              </select>
+            </div>
+            <div>
               <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Supplier Name</label>
               <input type="text" id="new-ing-vendor" placeholder="Fresh Produce Co." class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none" />
             </div>
@@ -276,6 +286,17 @@ import Layout from '../layouts/Layout.astro';
                 🗑️ Clear Stocks
               </button>
             </div>
+          </div>
+
+          <!-- Category Filter Tabs -->
+          <div class="px-4 py-2 border-b border-charcoal-700 bg-charcoal-900/20 flex flex-wrap gap-2 items-center" id="category-filters">
+            <span class="text-[10px] font-mono text-charcoal-400 uppercase tracking-wider select-none mr-2">Categories:</span>
+            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-emerald-500 text-charcoal-950 border border-emerald-500" data-category="All">All</button>
+            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-charcoal-900 text-charcoal-350 border border-charcoal-700 hover:border-charcoal-600 transition-all" data-category="Vegetables">Vegetables</button>
+            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-charcoal-900 text-charcoal-350 border border-charcoal-700 hover:border-charcoal-600 transition-all" data-category="Fruits">Fruits</button>
+            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-charcoal-900 text-charcoal-350 border border-charcoal-700 hover:border-charcoal-600 transition-all" data-category="Dairy">Dairy</button>
+            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-charcoal-900 text-charcoal-350 border border-charcoal-700 hover:border-charcoal-600 transition-all" data-category="Dry Ration">Dry Ration</button>
+            <button class="category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-charcoal-900 text-charcoal-350 border border-charcoal-700 hover:border-charcoal-600 transition-all" data-category="Other">Other</button>
           </div>
 
           <div class="overflow-x-auto">
@@ -516,6 +537,7 @@ import Layout from '../layouts/Layout.astro';
     let localIngredients = [];
     let localMenuItems = [];
     let localBatches = [];
+    let activeCategoryFilter = 'All';
 
     // Initialize application
     document.addEventListener('DOMContentLoaded', async () => {
@@ -528,7 +550,23 @@ import Layout from '../layouts/Layout.astro';
       initSpeechRecognition();
       setupEventListeners();
       setupAuthFormListeners();
+      setupCategoryFilterListeners();
     });
+
+    function setupCategoryFilterListeners() {
+      const container = document.getElementById('category-filters');
+      if (!container) return;
+      container.querySelectorAll('.category-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          container.querySelectorAll('.category-filter-btn').forEach(b => {
+            b.className = "category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-charcoal-900 text-charcoal-350 border border-charcoal-700 hover:border-charcoal-600 transition-all";
+          });
+          btn.className = "category-filter-btn px-2.5 py-1 rounded text-[10px] font-mono font-bold bg-emerald-500 text-charcoal-950 border border-emerald-500";
+          activeCategoryFilter = btn.getAttribute('data-category');
+          renderInventory();
+        });
+      });
+    }
 
     // Dynamic headers based on local JWT storage
     function getHeaders() {
@@ -724,15 +762,31 @@ import Layout from '../layouts/Layout.astro';
           `;
         }
 
+        const cat = ing.category || 'Other';
+        if (activeCategoryFilter !== 'All' && cat !== activeCategoryFilter) {
+          return;
+        }
+
         const rowClass = isLow ? 'bg-amber-955/5 border-l-2 border-l-amber-500/40 hover:bg-amber-955/10' : 'hover:bg-charcoal-700/30';
         const badgeClass = isLow ? 'bg-rose-955 border border-rose-500/30 text-rose-500 animate-pulse' : 'bg-emerald-955 border border-emerald-500/30 text-emerald-500';
         const badgeText = isLow ? 'LOW STOCK' : 'NORMAL';
+
+        let catBadgeColor = 'bg-charcoal-900 border-charcoal-700 text-charcoal-350';
+        if (cat === 'Vegetables') catBadgeColor = 'bg-emerald-950/40 border-emerald-500/20 text-emerald-400';
+        else if (cat === 'Fruits') catBadgeColor = 'bg-amber-950/40 border-amber-500/20 text-amber-400';
+        else if (cat === 'Dairy') catBadgeColor = 'bg-sky-950/40 border-sky-500/20 text-sky-400';
+        else if (cat === 'Dry Ration') catBadgeColor = 'bg-amber-900/25 border-amber-600/25 text-amber-300';
 
         tbody.innerHTML += `
           <tr class="${rowClass} transition-colors border-b border-charcoal-700/40">
             <td class="p-4">
               <span class="font-bold text-charcoal-50 block">${ing.item_name}</span>
-              <span class="text-[10px] text-charcoal-400 font-mono">${ing.SKU_code}</span>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <span class="text-[9px] text-charcoal-400 font-mono">${ing.SKU_code}</span>
+                <span class="inline-block px-1.5 py-0.2 rounded border text-[9px] font-semibold tracking-wider font-mono ${catBadgeColor}">
+                  ${cat.toUpperCase()}
+                </span>
+              </div>
             </td>
             <td class="p-4 text-center">
               <div class="flex items-center justify-center gap-1.5">
@@ -1281,12 +1335,12 @@ import Layout from '../layouts/Layout.astro';
           }
         } else {
           localIngredients = [
-            { id: 1, SKU_code: 'SKU-ATT-01', item_name: 'Atta', current_stock: 2.0, safety_par_level: 5.0, unit_type: 'bags', cost_per_unit: 12.00, vendor_name: 'Desi Grains Co.' },
-            { id: 2, SKU_code: 'SKU-DAL-02', item_name: 'Dal', current_stock: 8.0, safety_par_level: 10.0, unit_type: 'kg', cost_per_unit: 4.50, vendor_name: 'Desi Grains Co.' },
-            { id: 3, SKU_code: 'SKU-RIC-03', item_name: 'Rice', current_stock: 3.0, safety_par_level: 8.0, unit_type: 'bags', cost_per_unit: 18.00, vendor_name: 'Desi Grains Co.' },
-            { id: 4, SKU_code: 'SKU-ONN-04', item_name: 'Onions', current_stock: 18.0, safety_par_level: 15.0, unit_type: 'kg', cost_per_unit: 2.50, vendor_name: 'Fresh Produce Co.' },
-            { id: 5, SKU_code: 'SKU-POT-05', item_name: 'Potato', current_stock: 12.0, safety_par_level: 20.0, unit_type: 'kg', cost_per_unit: 1.80, vendor_name: 'Fresh Produce Co.' },
-            { id: 6, SKU_code: 'SKU-SUG-06', item_name: 'Sugar', current_stock: 4.0, safety_par_level: 10.0, unit_type: 'kg', cost_per_unit: 3.00, vendor_name: 'Sysco' }
+            { id: 1, SKU_code: 'SKU-ATT-01', item_name: 'Atta', current_stock: 2.0, safety_par_level: 5.0, unit_type: 'bags', cost_per_unit: 12.00, vendor_name: 'Desi Grains Co.', category: 'Dry Ration' },
+            { id: 2, SKU_code: 'SKU-DAL-02', item_name: 'Dal', current_stock: 8.0, safety_par_level: 10.0, unit_type: 'kg', cost_per_unit: 4.50, vendor_name: 'Desi Grains Co.', category: 'Dry Ration' },
+            { id: 3, SKU_code: 'SKU-RIC-03', item_name: 'Rice', current_stock: 3.0, safety_par_level: 8.0, unit_type: 'bags', cost_per_unit: 18.00, vendor_name: 'Desi Grains Co.', category: 'Dry Ration' },
+            { id: 4, SKU_code: 'SKU-ONN-04', item_name: 'Onions', current_stock: 18.0, safety_par_level: 15.0, unit_type: 'kg', cost_per_unit: 2.50, vendor_name: 'Fresh Produce Co.', category: 'Vegetables' },
+            { id: 5, SKU_code: 'SKU-POT-05', item_name: 'Potato', current_stock: 12.0, safety_par_level: 20.0, unit_type: 'kg', cost_per_unit: 1.80, vendor_name: 'Fresh Produce Co.', category: 'Vegetables' },
+            { id: 6, SKU_code: 'SKU-SUG-06', item_name: 'Sugar', current_stock: 4.0, safety_par_level: 10.0, unit_type: 'kg', cost_per_unit: 3.00, vendor_name: 'Sysco', category: 'Dry Ration' }
           ];
           showToast('[Sandbox] Reset local values to defaults');
           renderInventory();
@@ -1477,6 +1531,7 @@ import Layout from '../layouts/Layout.astro';
         const par = parseFloat(document.getElementById('new-ing-par').value);
         const cost = parseFloat(document.getElementById('new-ing-cost').value);
         const vendor = document.getElementById('new-ing-vendor').value.trim();
+        const category = document.getElementById('new-ing-category').value;
 
         if (!name || !sku || !unit || isNaN(par) || isNaN(cost) || !vendor) {
           showToast('Please fill out all custom fields.', 'error');
@@ -1490,7 +1545,8 @@ import Layout from '../layouts/Layout.astro';
           safety_par_level: par,
           unit_type: unit,
           cost_per_unit: cost,
-          vendor_name: vendor
+          vendor_name: vendor,
+          category: category
         };
 
         if (isBackendOnline) {
@@ -1511,6 +1567,7 @@ import Layout from '../layouts/Layout.astro';
               document.getElementById('new-ing-par').value = '';
               document.getElementById('new-ing-cost').value = '';
               document.getElementById('new-ing-vendor').value = '';
+              document.getElementById('new-ing-category').value = 'Other';
               addForm.classList.add('hidden');
               toggleAddFormBtn.innerText = 'Toggle Form';
 
@@ -1534,6 +1591,7 @@ import Layout from '../layouts/Layout.astro';
           document.getElementById('new-ing-par').value = '';
           document.getElementById('new-ing-cost').value = '';
           document.getElementById('new-ing-vendor').value = '';
+          document.getElementById('new-ing-category').value = 'Other';
           addForm.classList.add('hidden');
           toggleAddFormBtn.innerText = 'Toggle Form';
 
