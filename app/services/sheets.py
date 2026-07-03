@@ -17,6 +17,16 @@ SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "")
 CREDENTIALS_JSON = os.getenv("GOOGLE_SHEETS_CREDENTIALS_JSON", "")
 
 is_sheets_mock = not SHEET_ID or not CREDENTIALS_JSON or CREDENTIALS_JSON.startswith("mock_")
+
+import contextvars
+sheets_mock_override = contextvars.ContextVar("sheets_mock_override", default=None)
+
+def is_mock_active() -> bool:
+    override = sheets_mock_override.get()
+    if override is not None:
+        return override
+    return is_sheets_mock
+
 client = None
 spreadsheet = None
 
@@ -47,7 +57,7 @@ else:
 
 def get_worksheet(title: str, headers: List[str]) -> Optional[gspread.Worksheet]:
     """Retrieves a worksheet, creating it with headers if it does not exist."""
-    if is_sheets_mock or not spreadsheet:
+    if is_mock_active() or not spreadsheet:
         return None
     try:
         return spreadsheet.worksheet(title)
@@ -70,7 +80,7 @@ def sync_ingredients_from_sheet(db: Session, tenant_id: int = 1):
     """
     headers = ["SKU_code", "item_name", "current_stock", "safety_par_level", "unit_type", "cost_per_unit", "vendor_name"]
     
-    if is_sheets_mock:
+    if is_mock_active():
         logger.info("[Sheets Sandbox] Simulating sync ingredients from sheet to local DB.")
         return {"status": "mock", "message": "Spreadsheet simulation: Synced ingredients cached."}
 
@@ -152,7 +162,7 @@ def update_sheet_ingredient_stock(sku: str, stock: float):
     """Updates the stock count cell for the matching SKU code in Google Sheet."""
     headers = ["SKU_code", "item_name", "current_stock", "safety_par_level", "unit_type", "cost_per_unit", "vendor_name"]
     
-    if is_sheets_mock:
+    if is_mock_active():
         logger.info(f"[Sheets Sandbox] Simulating update sheet: Stock for SKU {sku} set to {stock}.")
         return
 
@@ -178,7 +188,7 @@ def add_sheet_ingredient(sku: str, name: str, stock: float, par: float, unit: st
     """Appends a new ingredient row in Google Sheet."""
     headers = ["SKU_code", "item_name", "current_stock", "safety_par_level", "unit_type", "cost_per_unit", "vendor_name"]
     
-    if is_sheets_mock:
+    if is_mock_active():
         logger.info(f"[Sheets Sandbox] Simulating register ingredient: SKU {sku} ({name}) added.")
         return
 
@@ -200,7 +210,7 @@ def log_po_to_sheet(vendor_name: str, items: List[Dict]):
     """Logs approved purchase order items as rows in 'Purchase_Orders' worksheet tab."""
     headers = ["vendor_name", "item_name", "quantity", "unit", "total_cost", "logged_at"]
     
-    if is_sheets_mock:
+    if is_mock_active():
         logger.info(f"[Sheets Sandbox] Simulating log PO: {len(items)} items saved to spreadsheet.")
         return
 
@@ -228,7 +238,7 @@ def log_audit_to_sheet(invoice_number: str, vendor_name: str, items: List[Dict])
     """Logs scanned invoice item checks and cost anomalies to 'Price_Audits' worksheet tab."""
     headers = ["invoice_number", "vendor_name", "item_name", "quantity", "unit_price", "price_anomaly", "checked_at"]
     
-    if is_sheets_mock:
+    if is_mock_active():
         logger.info(f"[Sheets Sandbox] Simulating log price audit: {len(items)} invoice items logged.")
         return
 

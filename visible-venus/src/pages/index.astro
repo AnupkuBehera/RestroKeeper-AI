@@ -157,11 +157,17 @@ import Layout from '../layouts/Layout.astro';
 
       <!-- Card 4: Sheets Sync status -->
       <div class="bg-charcoal-800/60 border border-charcoal-700/60 rounded-2xl p-5 flex items-center justify-between shadow-lg">
-        <div>
+        <div class="flex-1">
           <span class="text-[10px] font-mono text-charcoal-400 uppercase tracking-wider block">Google Sheets Sync</span>
           <span id="kpi-sheets-status" class="text-xs font-bold text-amber-500 mt-2 block font-mono">Sandbox Mode</span>
+          <div class="mt-2.5 flex items-center gap-1.5">
+            <span class="text-[9px] text-charcoal-400 font-mono">Sandbox Override:</span>
+            <button id="toggle-sandbox-btn" class="px-2 py-0.5 rounded text-[9px] font-bold font-mono transition-all border border-amber-500/30 bg-amber-955/20 text-amber-400 hover:bg-amber-500 hover:text-charcoal-950">
+              ACTIVE
+            </button>
+          </div>
         </div>
-        <div class="h-10 w-10 rounded-xl bg-charcoal-900 border border-charcoal-700/80 flex items-center justify-center text-lg">
+        <div class="h-10 w-10 rounded-xl bg-charcoal-900 border border-charcoal-700/80 flex items-center justify-center text-lg select-none">
           📊
         </div>
       </div>
@@ -571,6 +577,7 @@ import Layout from '../layouts/Layout.astro';
     // Initialize application
     document.addEventListener('DOMContentLoaded', async () => {
       checkSessionToken();
+      initSandboxToggle();
       await checkBackendHealth();
       await fetchSheetsConfig();
       await refreshData();
@@ -581,6 +588,39 @@ import Layout from '../layouts/Layout.astro';
       setupAuthFormListeners();
       setupCategoryFilterListeners();
     });
+
+    function initSandboxToggle() {
+      const btn = document.getElementById('toggle-sandbox-btn');
+      if (!btn) return;
+
+      let isSandbox = localStorage.getItem('rk_sheets_sandbox');
+      if (isSandbox === null) {
+        isSandbox = 'true'; // Default to active sandbox for demo
+        localStorage.setItem('rk_sheets_sandbox', 'true');
+      }
+
+      function updateUI() {
+        if (isSandbox === 'true') {
+          btn.innerText = 'ACTIVE';
+          btn.className = 'px-2 py-0.5 rounded text-[9px] font-bold font-mono transition-all border border-amber-500/30 bg-amber-955/20 text-amber-400 hover:bg-amber-500 hover:text-charcoal-950';
+        } else {
+          btn.innerText = 'INACTIVE';
+          btn.className = 'px-2 py-0.5 rounded text-[9px] font-bold font-mono transition-all border border-charcoal-700 bg-charcoal-900 text-charcoal-400 hover:border-charcoal-600 hover:text-charcoal-100';
+        }
+      }
+
+      updateUI();
+
+      btn.addEventListener('click', async () => {
+        isSandbox = isSandbox === 'true' ? 'false' : 'true';
+        localStorage.setItem('rk_sheets_sandbox', isSandbox);
+        updateUI();
+        showToast(`Google Sheets Sync Mode set to: ${isSandbox === 'true' ? 'Sandbox Simulation' : 'Live Sync'}`);
+        
+        await fetchSheetsConfig();
+        await refreshData();
+      });
+    }
 
     function setupCategoryFilterListeners() {
       const container = document.getElementById('category-filters');
@@ -605,6 +645,10 @@ import Layout from '../layouts/Layout.astro';
       const token = localStorage.getItem('rk_token');
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
+      }
+      const isSandboxOverride = localStorage.getItem('rk_sheets_sandbox') === 'true';
+      if (isSandboxOverride) {
+        headers['X-Mock-Sheets'] = 'true';
       }
       return headers;
     }

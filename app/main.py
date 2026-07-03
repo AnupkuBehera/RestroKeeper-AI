@@ -255,6 +255,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Sheets Mock Override Middleware
+@app.middleware("http")
+async def sheets_mock_middleware(request, call_next):
+    from .services.sheets import sheets_mock_override
+    mock_header = request.headers.get("x-mock-sheets", "false").lower() == "true"
+    token = sheets_mock_override.set(mock_header if mock_header else None)
+    try:
+        response = await call_next(request)
+    finally:
+        sheets_mock_override.reset(token)
+    return response
 
 
 # Dependency to seed default data if empty
@@ -644,7 +655,7 @@ def get_ingredients(tenant_id: int = Depends(get_current_tenant_id), db: Session
 @app.get("/api/sheets/config")
 def get_sheets_config():
     """Returns Google Sheets setup configuration details to the frontend status badge."""
-    from .services.sheets import is_sheets_mock, SHEET_ID, CREDENTIALS_JSON
+    from .services.sheets import is_mock_active, SHEET_ID, CREDENTIALS_JSON
     
     # Extract service account email if credentials JSON is set
     share_email = "not-configured"
@@ -662,7 +673,7 @@ def get_sheets_config():
             share_email = "invalid-credentials-format"
             
     return {
-        "is_mock": is_sheets_mock,
+        "is_mock": is_mock_active(),
         "sheet_id": SHEET_ID or "not-configured",
         "share_email": share_email
     }
