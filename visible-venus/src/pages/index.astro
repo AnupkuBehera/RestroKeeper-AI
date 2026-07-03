@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout>
-  <!-- Navigation Header -->
+  <!-- Header Navbar -->
   <header class="sticky top-0 z-40 border-b border-charcoal-700 bg-charcoal-900/85 backdrop-blur-md">
     <div class="mx-auto flex max-w-7xl h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
       <!-- Logo -->
@@ -13,26 +13,13 @@ import Layout from '../layouts/Layout.astro';
         </div>
         <div>
           <span class="text-lg font-semibold tracking-tight text-charcoal-50">RestoKeeper <span class="text-emerald-500 font-bold">AI</span></span>
-          <span class="block text-[10px] text-charcoal-400 font-mono tracking-wider uppercase">Procurement Engine</span>
+          <span class="block text-[10px] text-charcoal-400 font-mono tracking-wider uppercase">Restaurant Inventory Manager</span>
         </div>
       </div>
 
-      <!-- Navigation Tabs -->
-      <nav class="hidden md:flex space-x-1" aria-label="Tabs">
-        <button id="tab-btn-voice" class="nav-tab active-tab px-4 py-2 text-sm font-medium rounded-full transition-all">
-          Voice Inventory
-        </button>
-        <button id="tab-btn-invoice" class="nav-tab px-4 py-2 text-sm font-medium rounded-full text-charcoal-400 hover:text-charcoal-50 transition-all">
-          Invoice Auditor
-        </button>
-        <button id="tab-btn-procure" class="nav-tab px-4 py-2 text-sm font-medium rounded-full text-charcoal-400 hover:text-charcoal-50 transition-all">
-          Smart Procurement
-        </button>
-      </nav>
-
-      <!-- Connection Status & Controls -->
+      <!-- Server & Sheets Status Badge -->
       <div class="flex items-center gap-3">
-        <!-- Backend Server Status -->
+        <!-- Backend API Status -->
         <div id="backend-status" class="flex items-center gap-1.5 rounded-full border border-charcoal-700 bg-charcoal-800 px-3 py-1 text-xs">
           <span class="h-2 w-2 rounded-full bg-amber-500 animate-pulse" id="backend-dot"></span>
           <span class="text-charcoal-400 font-mono text-[11px]" id="backend-text">Checking API...</span>
@@ -44,8 +31,8 @@ import Layout from '../layouts/Layout.astro';
           </svg>
           <span class="text-charcoal-400 font-mono text-[11px]" id="sheets-text">Sheets: Sandbox</span>
         </div>
-        <!-- Reset Button -->
-        <button id="demo-reset-btn" class="hidden sm:flex items-center gap-1.5 rounded-md border border-charcoal-700 hover:border-charcoal-600 bg-charcoal-900 px-3 py-1.5 text-xs text-charcoal-200 hover:text-charcoal-50 font-medium transition-all" title="Reset Stock counts to default deficits">
+        <!-- Reset Database Button -->
+        <button id="demo-reset-btn" class="flex items-center gap-1.5 rounded-md border border-charcoal-700 hover:border-charcoal-600 bg-charcoal-900 px-3 py-1.5 text-xs text-charcoal-200 hover:text-charcoal-50 font-medium transition-all" title="Reset stocks to default metrics">
           <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3m-3-3v12" />
           </svg>
@@ -55,20 +42,20 @@ import Layout from '../layouts/Layout.astro';
     </div>
   </header>
 
-  <!-- Google Sheet Quick Setup Info Drawer -->
+  <!-- Google Sheet Sync Status Drawer -->
   <div id="sheets-info-drawer" class="hidden mx-auto max-w-7xl px-4 mt-4 sm:px-6 lg:px-8">
     <div class="bg-charcoal-800 border border-charcoal-700 rounded-xl p-4 text-xs font-mono text-charcoal-300 space-y-2.5 shadow-2xl">
       <div class="flex justify-between items-center text-charcoal-200 border-b border-charcoal-700 pb-2">
         <span class="font-bold uppercase text-[10px] tracking-wider text-emerald-500 flex items-center gap-1">
           <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          Google Sheets Sync Integration Guide
+          Google Sheets Sync status
         </span>
         <button id="close-sheets-drawer" class="text-charcoal-400 hover:text-charcoal-200 cursor-pointer">✕ Close</button>
       </div>
       <p>
         1. Open your target Google Sheet and share it with edit access to this Service Account:
         <br />
-        <code class="bg-charcoal-900 text-emerald-400 px-2 py-1 rounded block mt-1 select-all select-text font-semibold font-mono" id="sheets-email-display">loading service email...</code>
+        <code class="bg-charcoal-900 text-emerald-400 px-2 py-1 rounded block mt-1 select-all select-text font-semibold font-mono" id="sheets-email-display">gcp-service-account@not-configured.iam.gserviceaccount.com</code>
       </p>
       <p>
         2. Set these environment variables in your backend <code class="bg-charcoal-900 text-charcoal-100 px-1 rounded select-all font-mono">.env</code> configuration:
@@ -79,7 +66,7 @@ import Layout from '../layouts/Layout.astro';
         </code>
       </p>
       <div class="pt-2 border-t border-charcoal-700/50 flex items-center justify-between">
-        <span>Spreadsheet Sync status: <strong id="sheets-drawer-status" class="text-amber-500 font-semibold font-mono">Sandbox Simulation (Offline Cache)</strong></span>
+        <span>Spreadsheet status: <strong id="sheets-drawer-status" class="text-amber-500 font-semibold font-mono">Sandbox Simulation (Offline Cache)</strong></span>
         <a href="#" id="sheets-link-url" target="_blank" class="hidden text-emerald-500 hover:text-emerald-400 underline font-bold flex items-center gap-1 transition-all">
           Open Spreadsheet 🔗
         </a>
@@ -88,778 +75,641 @@ import Layout from '../layouts/Layout.astro';
   </div>
 
   <!-- Main Container -->
-  <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-    
-    <!-- View 1: Voice Inventory (Mobile-First Card Container) -->
-    <section id="view-voice" class="view-section block">
-      <div class="mx-auto max-w-md bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
-        <!-- View Header -->
-        <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-5 flex items-center justify-between">
-          <div>
-            <h2 class="text-lg font-semibold text-charcoal-50">Staff Voice Inventory</h2>
-            <p class="text-xs text-charcoal-400 mt-0.5">Walk the storage & call out items</p>
-          </div>
-          <!-- Offline badge -->
-          <div id="offline-badge" class="flex items-center gap-1 rounded-full bg-emerald-950 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] text-emerald-500 font-medium font-mono">
-            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-            Cloud Sync
-          </div>
+  <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+
+    <!-- RESTOCK ALERTS BOX (Pulsing Alerts Banner at Top) -->
+    <div id="restock-alerts-container" class="hidden rounded-xl border border-rose-500/30 bg-rose-950/15 p-4 shadow-md">
+      <div class="flex items-start gap-3">
+        <div class="h-8 w-8 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 flex-shrink-0 animate-pulse">
+          ⚠️
         </div>
-
-        <div class="p-6 flex flex-col items-center">
-          <!-- Live Ingredients Quick Status Bar -->
-          <div class="w-full mb-6">
-            <span class="text-xs font-semibold text-charcoal-400 block mb-2 font-mono uppercase tracking-wider">Current Deficit Levels:</span>
-            <div class="grid grid-cols-2 gap-2 text-xs" id="voice-ingredients-grid">
-              <!-- Dynamically populated ingredients -->
-            </div>
-          </div>
-
-          <!-- Pulsing Record Button -->
-          <div class="relative my-8 flex flex-col items-center justify-center">
-            <button id="mic-record-btn" class="h-28 w-28 rounded-full bg-charcoal-700 border-4 border-charcoal-600 flex items-center justify-center text-charcoal-50 hover:text-emerald-500 transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer z-10">
-              <svg id="mic-icon" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-              </svg>
-            </button>
-            <!-- Recording Active Waves -->
-            <div id="mic-pulse-ring" class="hidden absolute top-0 left-0 h-28 w-28 rounded-full border border-emerald-500/50 animate-mic-pulse"></div>
-            
-            <span id="mic-status-label" class="mt-4 text-sm font-semibold text-charcoal-400 font-mono tracking-wide">TAP TO COUNT</span>
-          </div>
-
-          <!-- Simulated Phrase Injectors (Reviewer controls) -->
-          <div class="w-full border-t border-charcoal-700 pt-4 mt-2">
-            <span class="text-xs font-semibold text-charcoal-400 font-mono tracking-wider block mb-2 uppercase">Or Simulate Voice Count:</span>
-            <div class="flex flex-col gap-1.5">
-              <button class="voice-sim-btn w-full text-left rounded-lg bg-charcoal-900 border border-charcoal-700 hover:border-charcoal-600 p-2.5 text-xs text-charcoal-200 hover:text-charcoal-50 flex justify-between items-center transition-all" data-phrase="Onions, 9 bags">
-                <span>"Onions, 9 bags"</span>
-                <span class="text-[10px] bg-charcoal-700 text-charcoal-400 rounded px-1.5 font-mono">Fill deficiency</span>
-              </button>
-              <button class="voice-sim-btn w-full text-left rounded-lg bg-charcoal-900 border border-charcoal-700 hover:border-charcoal-600 p-2.5 text-xs text-charcoal-200 hover:text-charcoal-50 flex justify-between items-center transition-all" data-phrase="Cheese, 7 blocks; Onions, 12 bags">
-                <span>"Cheese, 7 blocks; Onions, 12 bags"</span>
-                <span class="text-[10px] bg-charcoal-700 text-charcoal-400 rounded px-1.5 font-mono">Count multi-items</span>
-              </button>
-              <button class="voice-sim-btn w-full text-left rounded-lg bg-charcoal-900 border border-charcoal-700 hover:border-charcoal-600 p-2.5 text-xs text-charcoal-200 hover:text-charcoal-50 flex justify-between items-center transition-all" data-phrase="Tomato, 11 kg; Flour, 8 bags">
-                <span>"Tomato, 11 kg; Flour, 8 bags"</span>
-                <span class="text-[10px] bg-charcoal-700 text-charcoal-400 rounded px-1.5 font-mono">Update flour & tomato</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Clear Stocks & Add Ingredient Tools -->
-          <div class="w-full mt-3 bg-charcoal-900/20 border border-charcoal-700/50 rounded-xl p-3">
-            <button id="clear-stocks-btn" class="w-full text-center rounded-lg bg-rose-955/20 hover:bg-rose-955/40 border border-rose-500/30 py-2 px-2.5 text-xs text-rose-500 hover:text-rose-400 font-bold transition-all">
-              🗑️ Clear Stocks to 0.0 (Fresh Count)
-            </button>
-
-            <button id="toggle-add-ing-btn" class="w-full text-center rounded-lg bg-charcoal-800 border border-charcoal-700 hover:border-charcoal-600 py-2 px-2.5 text-xs text-charcoal-200 hover:text-charcoal-50 font-bold mt-2 transition-all">
-              ➕ Register New Ingredient SKU
-            </button>
-            
-            <div id="add-ing-form-container" class="hidden mt-3 space-y-3 bg-charcoal-950/50 p-3.5 rounded-lg border border-charcoal-700">
-              <div>
-                <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Item Name</label>
-                <input type="text" id="new-ing-name" placeholder="e.g. Avocado" class="w-full bg-charcoal-800 border border-charcoal-700 rounded p-1.5 text-xs text-charcoal-50 focus:outline-none focus:border-emerald-500" />
-              </div>
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">SKU Code</label>
-                  <input type="text" id="new-ing-sku" placeholder="SKU-AVO-06" class="w-full bg-charcoal-800 border border-charcoal-700 rounded p-1.5 text-xs text-charcoal-50 focus:outline-none" />
-                </div>
-                <div>
-                  <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Unit Type</label>
-                  <input type="text" id="new-ing-unit" placeholder="boxes, bags, kg" class="w-full bg-charcoal-800 border border-charcoal-700 rounded p-1.5 text-xs text-charcoal-50 focus:outline-none" />
-                </div>
-              </div>
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Safety Par</label>
-                  <input type="number" id="new-ing-par" placeholder="5" class="w-full bg-charcoal-800 border border-charcoal-700 rounded p-1.5 text-xs text-charcoal-50 focus:outline-none" />
-                </div>
-                <div>
-                  <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Cost / Unit ($)</label>
-                  <input type="number" id="new-ing-cost" placeholder="18.50" class="w-full bg-charcoal-800 border border-charcoal-700 rounded p-1.5 text-xs text-charcoal-50 focus:outline-none" />
-                </div>
-              </div>
-              <div>
-                <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Supplier / Vendor</label>
-                <input type="text" id="new-ing-vendor" placeholder="Fresh Produce Co." class="w-full bg-charcoal-800 border border-charcoal-700 rounded p-1.5 text-xs text-charcoal-50 focus:outline-none" />
-              </div>
-              <button id="save-new-ing-btn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-charcoal-950 font-bold text-xs p-2 rounded-lg transition-all">
-                Save Ingredient
-              </button>
-            </div>
-          </div>
-
-          <!-- Live Transcript Ticker -->
-          <div class="w-full mt-6 bg-charcoal-950 border border-charcoal-700 rounded-xl p-4">
-            <span class="text-[10px] font-bold text-emerald-500 font-mono tracking-wider block mb-1 uppercase">Live Pseudo-Transcript Ticker:</span>
-            <div id="transcript-ticker" class="text-sm font-mono text-charcoal-200 italic min-h-6">
-              "Standing by... Speak inventory or select a simulation shortcut."
-            </div>
-          </div>
-
-          <!-- Parsed Stock Update Result -->
-          <div id="voice-sync-results" class="w-full mt-4 hidden">
-            <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/10 p-4">
-              <span class="text-[11px] font-bold text-emerald-500 font-mono uppercase block mb-2">Synced Stock Adjustments:</span>
-              <ul class="space-y-1 text-xs font-mono" id="voice-updated-list">
-                <!-- Dynamically populated -->
-              </ul>
-            </div>
-          </div>
-
+        <div class="flex-1">
+          <h4 class="text-sm font-bold text-rose-500 font-mono tracking-wide uppercase">RE-STOCK ALERTS: Low Inventory Levels Detected</h4>
+          <p class="text-xs text-charcoal-400 mt-0.5">The following ingredients have fallen below their safety par levels and need to be ordered:</p>
+          <ul id="restock-alerts-list" class="mt-2.5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs font-mono">
+            <!-- Dynamically populated low stock alerts -->
+          </ul>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- View 2: Invoice Scanner (Split-Screen Audit Dashboard) -->
-    <section id="view-invoice" class="view-section hidden">
-      <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden p-6">
-        <div class="flex flex-col lg:flex-row gap-6">
+    <!-- Dashboard Main Grid Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT COLUMN: Voice / Text Update Panel (lg:span-5) -->
+      <section class="lg:col-span-5 space-y-6">
+        
+        <!-- Voice & Type Stock Count Card -->
+        <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
+          <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4">
+            <h2 class="text-base font-semibold text-charcoal-50">Voice & Type Stock Auditor</h2>
+            <p class="text-xs text-charcoal-400 mt-0.5">Quick update quantities by speaking or typing</p>
+          </div>
+
+          <div class="p-6 flex flex-col items-center">
+            
+            <!-- Real-time Voice Transcription Button -->
+            <div class="relative my-4 flex flex-col items-center justify-center">
+              <button id="mic-record-btn" class="h-28 w-28 rounded-full bg-charcoal-700 border-4 border-charcoal-600 flex items-center justify-center text-charcoal-50 hover:text-emerald-500 transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer z-10">
+                <svg id="mic-icon" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+              </button>
+              <div id="mic-pulse-ring" class="hidden absolute top-0 left-0 h-28 w-28 rounded-full border border-emerald-500/50 animate-mic-pulse"></div>
+              
+              <span id="mic-status-label" class="mt-4 text-xs font-semibold text-charcoal-400 font-mono tracking-wider">TAP TO VOICE COUNT</span>
+            </div>
+
+            <!-- Voice Ticker / Live feedback -->
+            <div id="voice-ticker" class="w-full text-center text-xs font-mono italic text-emerald-400 min-h-[20px] mb-4">
+              Standing by... Speak your counts or type below.
+            </div>
+
+            <!-- Text Box Input for Typed / Transcribed queries -->
+            <div class="w-full space-y-2">
+              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider">Spoken Transcription / Typed Counts</label>
+              <textarea id="inventory-text-input" placeholder='e.g., Atta 5 bags, Dal 12 kg, Rice 10 bags' rows="3" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-xl p-3 text-sm text-charcoal-50 focus:outline-none focus:border-emerald-500 font-mono"></textarea>
+              <button id="process-stock-btn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-charcoal-950 font-bold text-sm py-2.5 rounded-xl transition-all shadow-md">
+                Update Stock counts & Sync
+              </button>
+            </div>
+
+            <!-- Synced Stock adjustments feedback list -->
+            <div id="sync-results" class="w-full mt-4 hidden">
+              <div class="rounded-xl border border-emerald-500/20 bg-emerald-950/10 p-4">
+                <span class="text-[10px] font-bold text-emerald-500 font-mono uppercase block mb-2">Synced Stock Adjustments:</span>
+                <ul class="space-y-1.5 text-xs font-mono" id="updated-stock-list">
+                  <!-- Synced updates -->
+                </ul>
+              </div>
+            </div>
+
+            <!-- Simulation Count Shortcuts -->
+            <div class="w-full border-t border-charcoal-700 pt-4 mt-6">
+              <span class="text-[10px] font-semibold text-charcoal-400 font-mono tracking-wider block mb-2 uppercase">Quick Simulation Shortcuts:</span>
+              <div class="flex flex-col gap-1.5">
+                <button class="voice-sim-btn w-full text-left rounded-lg bg-charcoal-900 border border-charcoal-700 hover:border-charcoal-600 p-2.5 text-xs text-charcoal-200 hover:text-charcoal-50 flex justify-between items-center transition-all" data-phrase="Dal 12 kg, Atta 8 bags">
+                  <span>"Dal 12 kg, Atta 8 bags"</span>
+                  <span class="text-[9px] bg-emerald-950 text-emerald-500 border border-emerald-500/20 rounded px-1.5 font-mono">Fill Atta & Dal</span>
+                </button>
+                <button class="voice-sim-btn w-full text-left rounded-lg bg-charcoal-900 border border-charcoal-700 hover:border-charcoal-600 p-2.5 text-xs text-charcoal-200 hover:text-charcoal-50 flex justify-between items-center transition-all" data-phrase="Rice 10 bags, Potato 25 kg">
+                  <span>"Rice 10 bags, Potato 25 kg"</span>
+                  <span class="text-[9px] bg-emerald-950 text-emerald-500 border border-emerald-500/20 rounded px-1.5 font-mono">Increase Rice & Potato</span>
+                </button>
+                <button class="voice-sim-btn w-full text-left rounded-lg bg-charcoal-900 border border-charcoal-700 hover:border-charcoal-600 p-2.5 text-xs text-charcoal-200 hover:text-charcoal-50 flex justify-between items-center transition-all" data-phrase="Sugar 8 kg">
+                  <span>"Sugar 8 kg"</span>
+                  <span class="text-[9px] bg-emerald-950 text-emerald-500 border border-emerald-500/20 rounded px-1.5 font-mono">Replenish Sugar</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Add Custom Ingredient SKU Form -->
+        <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
+          <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4 flex justify-between items-center">
+            <h2 class="text-base font-semibold text-charcoal-50">Register New Ingredient SKU</h2>
+            <button id="toggle-add-form" class="text-xs text-emerald-500 font-bold hover:underline">Toggle Form</button>
+          </div>
+
+          <div id="add-ing-form" class="p-6 space-y-3.5 hidden">
+            <div>
+              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Item Name</label>
+              <input type="text" id="new-ing-name" placeholder="e.g. Garlic" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none focus:border-emerald-500" />
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">SKU Code</label>
+                <input type="text" id="new-ing-sku" placeholder="SKU-GAR-07" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Unit Type</label>
+                <input type="text" id="new-ing-unit" placeholder="kg, bags, boxes" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Safety Par Level</label>
+                <input type="number" id="new-ing-par" placeholder="10" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none" />
+              </div>
+              <div>
+                <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Cost / Unit ($)</label>
+                <input type="number" id="new-ing-cost" placeholder="3.50" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-[10px] text-charcoal-400 font-mono uppercase tracking-wider mb-1">Supplier Name</label>
+              <input type="text" id="new-ing-vendor" placeholder="Fresh Produce Co." class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg p-2 text-xs text-charcoal-50 focus:outline-none" />
+            </div>
+            <button id="save-new-ing-btn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-charcoal-950 font-bold text-xs py-2.5 rounded-lg transition-all shadow-md">
+              Save Ingredient SKU & Sync
+            </button>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- RIGHT COLUMN: Stock Inventory list & Inline Edits (lg:span-7) -->
+      <section class="lg:col-span-7">
+        <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl overflow-hidden">
           
-          <!-- Left Panel: Drag-and-Drop / Upload / Simulated Invoices -->
-          <div class="w-full lg:w-1/3 flex flex-col gap-4">
-            <h3 class="text-base font-semibold text-charcoal-50 font-mono tracking-wide">1. Upload Supplier Invoice</h3>
-            
-            <!-- Drag & Drop Zone -->
-            <div id="invoice-dropzone" class="border-2 border-dashed border-charcoal-700 hover:border-emerald-500/50 bg-charcoal-900 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all min-h-[220px]">
-              <input type="file" id="invoice-file-input" class="hidden" accept="image/*,application/pdf" />
-              <svg class="h-10 w-10 text-charcoal-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span class="text-sm font-medium text-charcoal-50">Drag invoice image here</span>
-              <span class="text-xs text-charcoal-400 mt-1">or click to upload PDF/JPEG</span>
+          <!-- Card Header -->
+          <div class="border-b border-charcoal-700 bg-charcoal-950/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 class="text-base font-semibold text-charcoal-50">Master Ingredient Inventory</h2>
+              <p class="text-xs text-charcoal-400 mt-0.5">Directly edit quantities in the table to synchronize instantly</p>
             </div>
-
-            <!-- Demo Simulate Quick Buttons -->
-            <div class="bg-charcoal-900 border border-charcoal-700 rounded-xl p-4">
-              <span class="text-xs font-semibold text-charcoal-400 font-mono tracking-wider block mb-3 uppercase">Simulation Audits:</span>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button class="invoice-sim-btn bg-charcoal-800 border border-charcoal-700 hover:border-charcoal-600 rounded-lg p-2.5 text-xs text-charcoal-200 hover:text-charcoal-50 text-left transition-all" data-vendor="Sysco">
-                  <div class="font-bold text-emerald-500">Sysco Invoice</div>
-                  <div class="text-[10px] text-charcoal-400 mt-0.5">Cheese price increase + Flour normal</div>
-                </button>
-                <button class="invoice-sim-btn bg-charcoal-800 border border-charcoal-700 hover:border-charcoal-600 rounded-lg p-2.5 text-xs text-charcoal-200 hover:text-charcoal-50 text-left transition-all" data-vendor="Fresh">
-                  <div class="font-bold text-emerald-500">Fresh Produce Co.</div>
-                  <div class="text-[10px] text-charcoal-400 mt-0.5">Onion price spike + Tomato normal</div>
-                </button>
-              </div>
+            <div class="flex items-center gap-2">
+              <button id="clear-stocks-btn" class="rounded-md border border-rose-500/30 hover:bg-rose-950/20 bg-charcoal-900 px-3 py-1.5 text-xs text-rose-500 font-medium transition-all" title="Clear all stock levels to 0.0 for fresh count">
+                🗑️ Clear Stocks
+              </button>
             </div>
           </div>
 
-          <!-- Right Panel: OCR Results & Split Screen Audit -->
-          <div class="w-full lg:w-2/3 border border-charcoal-700 bg-charcoal-900 rounded-xl p-6 min-h-[350px] flex flex-col">
-            <!-- Loading Skeleton (Hidden by default) -->
-            <div id="invoice-loading-skeleton" class="hidden flex-1 flex flex-col justify-center py-12 px-6">
-              <div class="flex items-center justify-center space-x-2 animate-pulse mb-6">
-                <div class="h-3 w-3 bg-emerald-500 rounded-full"></div>
-                <div class="h-3 w-3 bg-emerald-500 rounded-full animate-delay-100"></div>
-                <div class="h-3 w-3 bg-emerald-500 rounded-full animate-delay-200"></div>
-              </div>
-              <div class="space-y-4 max-w-lg mx-auto w-full">
-                <div class="h-4 bg-charcoal-700 rounded w-1/3"></div>
-                <div class="h-4 bg-charcoal-700 rounded w-1/2"></div>
-                <div class="h-10 bg-charcoal-700 rounded w-full mt-4"></div>
-                <div class="h-10 bg-charcoal-700 rounded w-full"></div>
-              </div>
-            </div>
-
-            <!-- Empty State -->
-            <div id="invoice-empty-state" class="flex-1 flex flex-col items-center justify-center text-center text-charcoal-400 py-12">
-              <svg class="h-12 w-12 text-charcoal-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <h4 class="text-sm font-semibold text-charcoal-200">No Audits Performed Yet</h4>
-              <p class="text-xs max-w-sm mt-1">Upload a supplier invoice to automatically parse prices and run historical audits for price increases.</p>
-            </div>
-
-            <!-- Parsed Results Table (Hidden by default) -->
-            <div id="invoice-results-panel" class="hidden flex-1 flex flex-col justify-between">
-              <div>
-                <!-- Metadata Bar -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-charcoal-700 pb-4 mb-4 gap-2">
-                  <div>
-                    <span class="text-xs text-charcoal-400 font-mono">SUPPLIER AUDITED:</span>
-                    <h4 id="invoice-vendor-name" class="text-base font-bold text-charcoal-50">Fresh Produce Co.</h4>
-                  </div>
-                  <div class="text-left sm:text-right">
-                    <span class="text-xs text-charcoal-400 font-mono">INVOICE:</span>
-                    <p id="invoice-doc-number" class="text-sm font-semibold text-charcoal-200">#INV-9812-B</p>
-                  </div>
-                </div>
-
-                <!-- Warnings Banner -->
-                <div id="anomaly-banner" class="hidden rounded-lg bg-amber-950/20 border border-amber-500/30 p-3.5 mb-5 flex items-start gap-3">
-                  <svg class="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  <div>
-                    <span class="text-xs font-semibold text-amber-500 block">Unit Cost Inflation Detected!</span>
-                    <span class="text-xs text-charcoal-400 mt-0.5 block" id="anomaly-banner-text">Some line items are priced higher than our historical baseline. Audited costs have been flagged.</span>
-                  </div>
-                </div>
-
-                <!-- Extracted Items Table -->
-                <div class="overflow-x-auto">
-                  <table class="w-full border-collapse text-left text-xs">
-                    <thead>
-                      <tr class="border-b border-charcoal-700 text-charcoal-400 font-mono">
-                        <th class="py-2.5 font-medium">Item Name</th>
-                        <th class="py-2.5 font-medium">Quantity</th>
-                        <th class="py-2.5 font-medium">Unit Price</th>
-                        <th class="py-2.5 font-medium">Baseline Price</th>
-                        <th class="py-2.5 font-medium">Status / Audit</th>
-                      </tr>
-                    </thead>
-                    <tbody id="invoice-items-tbody" class="divide-y divide-charcoal-700/50">
-                      <!-- Filled dynamically -->
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <!-- Action Bar -->
-              <div class="border-t border-charcoal-700 pt-4 mt-6 flex justify-between items-center text-xs">
-                <span class="text-charcoal-400">Total Audited Amount: <strong id="invoice-total-cost" class="text-charcoal-50 font-mono">$0.00</strong></span>
-                <span class="text-[10px] font-mono text-emerald-500 bg-emerald-950 border border-emerald-500/20 px-2 py-1 rounded-md">Baseline Prices Updated</span>
-              </div>
-            </div>
-
+          <!-- Inventory Table Container -->
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-left text-xs font-mono">
+              <thead>
+                <tr class="border-b border-charcoal-700 bg-charcoal-900/40 text-charcoal-400 text-[10px] tracking-wider uppercase">
+                  <th class="p-4 font-semibold">SKU / Item</th>
+                  <th class="p-4 font-semibold text-center">Current Stock</th>
+                  <th class="p-4 font-semibold text-center">Par Level</th>
+                  <th class="p-4 font-semibold">Cost & Supplier</th>
+                  <th class="p-4 font-semibold text-center">Status</th>
+                  <th class="p-4 font-semibold text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody id="inventory-table-tbody" class="divide-y divide-charcoal-700/50">
+                <!-- Dynamically populated inventory rows -->
+              </tbody>
+            </table>
           </div>
 
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- View 3: Smart Procurement Dashboard (Desktop View) -->
-    <section id="view-procure" class="view-section hidden">
-      <!-- Analytics Summary Bar -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 shadow">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-charcoal-400 font-mono uppercase tracking-wider">Total Waste Saved This Month</span>
-            <span class="p-1.5 rounded-lg bg-emerald-950/50 text-emerald-500">
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </span>
-          </div>
-          <h4 id="stat-waste-saved" class="text-3xl font-bold text-charcoal-50 mt-2 font-mono">$452.00</h4>
-          <span class="text-[10px] text-emerald-500 mt-1 block">✔ AI Over-ordering prevention logic active</span>
-        </div>
-
-        <div class="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 shadow">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-charcoal-400 font-mono uppercase tracking-wider">Critical Stock Alerts</span>
-            <span class="p-1.5 rounded-lg bg-amber-950/50 text-amber-500">
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </span>
-          </div>
-          <h4 id="stat-critical-alerts" class="text-3xl font-bold text-amber-500 mt-2 font-mono">3</h4>
-          <span class="text-[10px] text-charcoal-400 mt-1 block">Item stocks below safety threshold</span>
-        </div>
-
-        <div class="bg-charcoal-800 border border-charcoal-700 rounded-xl p-5 shadow">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-charcoal-400 font-mono uppercase tracking-wider">Pending Purchase Orders</span>
-            <span class="p-1.5 rounded-lg bg-charcoal-900 text-charcoal-50">
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-              </svg>
-            </span>
-          </div>
-          <h4 id="stat-pending-orders" class="text-3xl font-bold text-charcoal-50 mt-2 font-mono">2</h4>
-          <span class="text-[10px] text-emerald-500 mt-1 block">✔ AI Drafted based on 7-day demand</span>
-        </div>
-      </div>
-
-      <!-- Main Draft Purchase Orders Section -->
-      <div class="bg-charcoal-800 border border-charcoal-700 rounded-2xl shadow-xl p-6">
-        <div class="flex items-center justify-between border-b border-charcoal-700 pb-4 mb-6">
-          <div>
-            <h3 class="text-lg font-semibold text-charcoal-50">Draft Purchase Orders Generated by AI</h3>
-            <p class="text-xs text-charcoal-400 mt-0.5">Calculated from safety margins & upcoming week consumption forecasts</p>
-          </div>
-          <button id="refresh-po-btn" class="flex items-center gap-1.5 rounded-md border border-charcoal-700 hover:border-charcoal-600 bg-charcoal-900 px-3 py-1.5 text-xs text-charcoal-200 hover:text-charcoal-50 transition-all font-mono">
-            🔄 Refresh Drafts
-          </button>
-        </div>
-
-        <div class="space-y-8" id="vendor-panels-container">
-          <!-- Vendor Draft PO Blocks (Sysco, Fresh Produce Co.) will load here dynamically -->
-        </div>
-
-      </div>
-    </section>
+    </div>
 
   </main>
 
-  <!-- Mobile Bottom Tab Navigation -->
-  <div class="fixed bottom-0 left-0 right-0 z-40 border-t border-charcoal-700 bg-charcoal-900/90 backdrop-blur-md md:hidden">
-    <div class="flex justify-around items-center h-16 text-center text-xs">
-      <button id="mobile-tab-btn-voice" class="mobile-nav-tab flex flex-col items-center justify-center flex-1 text-emerald-500">
-        <svg class="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-        </svg>
-        Voice Inventory
-      </button>
-      <button id="mobile-tab-btn-invoice" class="mobile-nav-tab flex flex-col items-center justify-center flex-1 text-charcoal-400">
-        <svg class="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        Invoice Auditor
-      </button>
-      <button id="mobile-tab-btn-procure" class="mobile-nav-tab flex flex-col items-center justify-center flex-1 text-charcoal-400">
-        <svg class="h-5 w-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-        </svg>
-        Procurement
-      </button>
-    </div>
+  <!-- Simple Toast Notifications -->
+  <div id="toast" class="fixed bottom-4 right-4 z-50 transform translate-y-10 opacity-0 bg-charcoal-800 border border-charcoal-700 text-charcoal-50 px-4 py-2.5 rounded-lg text-xs font-mono shadow-2xl flex items-center gap-2 transition-all duration-300">
+    <span id="toast-message">Stock levels updated.</span>
   </div>
+</Layout>
 
-  <!-- Toast Notification System -->
-  <div id="toast-container" class="fixed bottom-20 md:bottom-6 right-6 z-50 flex flex-col gap-2 max-w-sm"></div>
-
-  <!-- Edit Line Items Modal -->
-  <div id="edit-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-charcoal-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-charcoal-800 border border-charcoal-700 rounded-xl max-w-md w-full shadow-2xl overflow-hidden">
-      <div class="border-b border-charcoal-700 bg-charcoal-900 px-6 py-4 flex items-center justify-between">
-        <h3 class="text-sm font-bold text-charcoal-50 font-mono tracking-wide uppercase">Edit PO Line Item</h3>
-        <button id="modal-close-btn" class="text-charcoal-400 hover:text-charcoal-50">✕</button>
-      </div>
-      <div class="p-6">
-        <div class="mb-4">
-          <label class="block text-xs font-semibold text-charcoal-400 font-mono uppercase tracking-wider mb-2">Item Name</label>
-          <input type="text" id="modal-item-name" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-md p-2.5 text-sm text-charcoal-200 select-none pointer-events-none" readonly />
-        </div>
-        <div class="mb-6">
-          <label class="block text-xs font-semibold text-charcoal-400 font-mono uppercase tracking-wider mb-2">Recommended Order Qty</label>
-          <div class="flex items-center gap-2">
-            <input type="number" id="modal-item-qty" min="0" step="1" class="w-full bg-charcoal-900 border border-charcoal-700 rounded-md p-2.5 text-sm text-charcoal-50 focus:border-emerald-500 focus:outline-none font-mono" />
-            <span id="modal-item-unit" class="text-sm text-charcoal-400 font-mono">units</span>
-          </div>
-        </div>
-        <div class="flex justify-end gap-2 text-xs">
-          <button id="modal-cancel-btn" class="rounded-md border border-charcoal-700 bg-charcoal-900 text-charcoal-200 hover:text-charcoal-50 px-4 py-2 font-medium transition-all">Cancel</button>
-          <button id="modal-save-btn" class="rounded-md bg-emerald-500 text-charcoal-950 hover:bg-emerald-600 px-4 py-2 font-semibold transition-all">Save Changes</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // Configuration
-    const BACKEND_BASE_URL = import.meta.env.PUBLIC_BACKEND_URL || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8000' : '');
+<script is:inline>
+  (function () {
+    const BACKEND_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+      ? 'http://localhost:8000' 
+      : window.location.origin;
     let isBackendOnline = false;
-    let sheetsConfig = { is_mock: true, sheet_id: '', share_email: '' };
-
-    // Local State fallback database - mirrors seeded backend DB structure
     let localIngredients = [
-      { id: 1, SKU_code: 'SKU-ONN-01', item_name: 'Onions', current_stock: 4.0, safety_par_level: 10.0, unit_type: 'bags', cost_per_unit: 15.00, vendor_name: 'Fresh Produce Co.' },
-      { id: 2, SKU_code: 'SKU-CHS-02', item_name: 'Cheddar Cheese', current_stock: 3.0, safety_par_level: 8.0, unit_type: 'blocks', cost_per_unit: 12.00, vendor_name: 'Sysco' },
-      { id: 3, SKU_code: 'SKU-TMT-03', item_name: 'Tomato', current_stock: 2.0, safety_par_level: 12.0, unit_type: 'kg', cost_per_unit: 5.00, vendor_name: 'Fresh Produce Co.' },
-      { id: 4, SKU_code: 'SKU-BFF-04', item_name: 'Beef Patties', current_stock: 22.0, safety_par_level: 15.0, unit_type: 'boxes', cost_per_unit: 45.00, vendor_name: 'Sysco' },
-      { id: 5, SKU_code: 'SKU-FLR-05', item_name: 'Flour', current_stock: 6.5, safety_par_level: 8.0, unit_type: 'bags', cost_per_unit: 8.50, vendor_name: 'Sysco' }
+      { id: 1, SKU_code: 'SKU-ATT-01', item_name: 'Atta', current_stock: 2.0, safety_par_level: 5.0, unit_type: 'bags', cost_per_unit: 12.00, vendor_name: 'Desi Grains Co.' },
+      { id: 2, SKU_code: 'SKU-DAL-02', item_name: 'Dal', current_stock: 8.0, safety_par_level: 10.0, unit_type: 'kg', cost_per_unit: 4.50, vendor_name: 'Desi Grains Co.' },
+      { id: 3, SKU_code: 'SKU-RIC-03', item_name: 'Rice', current_stock: 3.0, safety_par_level: 8.0, unit_type: 'bags', cost_per_unit: 18.00, vendor_name: 'Desi Grains Co.' },
+      { id: 4, SKU_code: 'SKU-ONN-04', item_name: 'Onions', current_stock: 18.0, safety_par_level: 15.0, unit_type: 'kg', cost_per_unit: 2.50, vendor_name: 'Fresh Produce Co.' },
+      { id: 5, SKU_code: 'SKU-POT-05', item_name: 'Potato', current_stock: 12.0, safety_par_level: 20.0, unit_type: 'kg', cost_per_unit: 1.80, vendor_name: 'Fresh Produce Co.' },
+      { id: 6, SKU_code: 'SKU-SUG-06', item_name: 'Sugar', current_stock: 4.0, safety_par_level: 10.0, unit_type: 'kg', cost_per_unit: 3.00, vendor_name: 'Sysco' }
     ];
 
-    // Current PO items cache for editing
-    let activePOData = null;
-    let editingPOItemIndex = -1;
-    let editingPOVendorName = '';
+    // Initialize application
+    document.addEventListener('DOMContentLoaded', async () => {
+      await checkBackendHealth();
+      await fetchSheetsConfig();
+      await fetchIngredients();
 
-    // Initialize elements
-    document.addEventListener('DOMContentLoaded', () => {
-      checkBackendHealth();
-      initNavigation();
-      initVoiceView();
-      initInvoiceView();
-      initProcureView();
-      initSheetsUI();
-      
-      // Global Reset click
-      document.getElementById('demo-reset-btn').addEventListener('click', handleGlobalReset);
+      initSpeechRecognition();
+      setupEventListeners();
     });
 
-    // Handle Sheets Setup info drawer toggles
-    function initSheetsUI() {
-      const statusBadge = document.getElementById('sheets-status');
-      const infoDrawer = document.getElementById('sheets-info-drawer');
-      const closeDrawer = document.getElementById('close-sheets-drawer');
-
-      statusBadge.addEventListener('click', () => {
-        infoDrawer.classList.toggle('hidden');
-      });
-
-      closeDrawer.addEventListener('click', () => {
-        infoDrawer.classList.add('hidden');
-      });
-    }
-
-    // Toast function
+    // Toast Alert Helper
     function showToast(message, type = 'success') {
-      const container = document.getElementById('toast-container');
-      const toast = document.createElement('div');
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      toastMsg.innerText = message;
       
-      const isError = type === 'error';
-      const isWarn = type === 'warning';
-      
-      let borderCol = 'border-emerald-500/30';
-      let bgCol = 'bg-emerald-950/90';
-      let textCol = 'text-emerald-500';
-      
-      if (isError) {
-        borderCol = 'border-rose-500/30';
-        bgCol = 'bg-rose-950/90';
-        textCol = 'text-rose-500';
-      } else if (isWarn) {
-        borderCol = 'border-amber-500/30';
-        bgCol = 'bg-amber-950/90';
-        textCol = 'text-amber-500';
+      if (type === 'error') {
+        toast.className = 'fixed bottom-4 right-4 z-50 bg-rose-955 border border-rose-500/30 text-rose-400 px-4 py-2.5 rounded-lg text-xs font-mono shadow-2xl flex items-center gap-2 transition-all duration-300 transform translate-y-0 opacity-100';
+      } else if (type === 'warning') {
+        toast.className = 'fixed bottom-4 right-4 z-50 bg-amber-955 border border-amber-500/30 text-amber-400 px-4 py-2.5 rounded-lg text-xs font-mono shadow-2xl flex items-center gap-2 transition-all duration-300 transform translate-y-0 opacity-100';
+      } else {
+        toast.className = 'fixed bottom-4 right-4 z-50 bg-charcoal-800 border border-emerald-500/30 text-emerald-400 px-4 py-2.5 rounded-lg text-xs font-mono shadow-2xl flex items-center gap-2 transition-all duration-300 transform translate-y-0 opacity-100';
       }
-      
-      toast.className = `border ${borderCol} ${bgCol} text-xs font-mono p-4 rounded-xl shadow-2xl flex justify-between items-center gap-4 transition-all duration-300 transform translate-y-4 opacity-0`;
-      toast.innerHTML = `
-        <div class="flex items-center gap-2">
-          <span class="h-2 w-2 rounded-full ${isError ? 'bg-rose-500' : isWarn ? 'bg-amber-500' : 'bg-emerald-500'}"></span>
-          <span class="text-charcoal-50">${message}</span>
-        </div>
-        <button class="text-charcoal-400 hover:text-charcoal-50 text-[10px]" onclick="this.parentElement.remove()">✕</button>
-      `;
-      
-      container.appendChild(toast);
-      
-      // Animate in
-      setTimeout(() => {
-        toast.classList.remove('translate-y-4', 'opacity-0');
-      }, 50);
 
-      // Remove after 5 seconds
       setTimeout(() => {
-        toast.classList.add('translate-y-4', 'opacity-0');
-        setTimeout(() => {
-          toast.remove();
-        }, 300);
-      }, 5000);
+        toast.className = 'fixed bottom-4 right-4 z-50 transform translate-y-10 opacity-0 bg-charcoal-800 border border-charcoal-700 text-charcoal-50 px-4 py-2.5 rounded-lg text-xs font-mono shadow-2xl flex items-center gap-2 transition-all duration-300';
+      }, 3500);
     }
 
-    // Health Check API
+    // Health check endpoint
     async function checkBackendHealth() {
       const dot = document.getElementById('backend-dot');
       const text = document.getElementById('backend-text');
-      
       try {
-        const res = await fetch(BACKEND_BASE_URL + '/api/health');
+        const res = await fetch(`${BACKEND_BASE_URL}/api/health`);
         if (res.ok) {
           isBackendOnline = true;
           dot.className = 'h-2 w-2 rounded-full bg-emerald-500';
-          text.innerText = 'API: Online';
-          text.className = 'text-emerald-500 font-mono text-[11px]';
-          // Load ingredients from backend
-          fetchIngredientsFromBackend();
-          // Load sheets configuration
-          fetchSheetsConfig();
+          text.innerText = 'API: Connected';
         } else {
-          throw new Error('Not OK');
+          throw new Error('API offline');
         }
       } catch (e) {
         isBackendOnline = false;
-        dot.className = 'h-2 w-2 rounded-full bg-amber-500 animate-pulse';
-        text.innerText = 'API: Sandbox Mock Mode';
-        text.className = 'text-amber-500 font-mono text-[11px]';
-        
-        // Reset Sheets config to mock in offline mode
-        sheetsConfig = { is_mock: true, sheet_id: '', share_email: '' };
-        updateSheetsUI();
-        
-        // Render local state in UI
-        renderVoiceIngredients();
-        refreshProcurementDrafts();
+        dot.className = 'h-2 w-2 rounded-full bg-rose-500 animate-pulse';
+        text.innerText = 'API: Sandbox';
+        showToast('Running in Sandbox Mode (Offline Cache)', 'warning');
       }
     }
 
+    // Sheets config loader
     async function fetchSheetsConfig() {
-      try {
-        const res = await fetch(`${BACKEND_BASE_URL}/api/sheets/config`);
-        if (res.ok) {
-          sheetsConfig = await res.json();
-          updateSheetsUI();
-        }
-      } catch (e) {
-        console.error('Failed to fetch Sheets configuration details:', e);
-      }
-    }
-
-    function updateSheetsUI() {
       const badge = document.getElementById('sheets-text');
       const icon = document.getElementById('sheets-icon');
       const drawerStatus = document.getElementById('sheets-drawer-status');
       const emailDisplay = document.getElementById('sheets-email-display');
       const linkUrl = document.getElementById('sheets-link-url');
-      
-      if (sheetsConfig.is_mock) {
+
+      if (!isBackendOnline) {
         badge.innerText = 'Sheets: Sandbox';
         badge.className = 'text-charcoal-400 font-mono text-[11px]';
-        icon.setAttribute('class', 'h-3.5 w-3.5 text-charcoal-400');
-        
         drawerStatus.innerText = 'Sandbox Simulation (Offline Cache)';
         drawerStatus.className = 'text-amber-500 font-semibold font-mono';
-        emailDisplay.innerText = 'gcp-service-account@not-configured.iam.gserviceaccount.com';
-        linkUrl.classList.add('hidden');
-      } else {
-        badge.innerText = 'Sheets: Linked';
-        badge.className = 'text-emerald-500 font-mono text-[11px]';
-        icon.setAttribute('class', 'h-3.5 w-3.5 text-emerald-500');
-        
-        drawerStatus.innerText = 'Linked & Synchronizing';
-        drawerStatus.className = 'text-emerald-500 font-semibold font-mono';
-        emailDisplay.innerText = sheetsConfig.share_email;
-        linkUrl.href = `https://docs.google.com/spreadsheets/d/${sheetsConfig.sheet_id}`;
-        linkUrl.classList.remove('hidden');
+        return;
       }
-    }
 
-    async function fetchIngredientsFromBackend() {
       try {
-        const res = await fetch(`${BACKEND_BASE_URL}/api/ingredients`, {
-          headers: {
-            'X-Tenant-ID': '1'
-          }
-        });
+        const res = await fetch(`${BACKEND_BASE_URL}/api/sheets/config`);
         if (res.ok) {
-          localIngredients = await res.json();
-          renderVoiceIngredients();
-          refreshProcurementDrafts();
+          const config = await res.json();
+          if (config.is_mock) {
+            badge.innerText = 'Sheets: Sandbox';
+            badge.className = 'text-charcoal-400 font-mono text-[11px]';
+            drawerStatus.innerText = 'Sandbox Simulation (Offline Cache)';
+            drawerStatus.className = 'text-amber-500 font-semibold';
+            linkUrl.classList.add('hidden');
+          } else {
+            badge.innerText = 'Sheets: Linked';
+            badge.className = 'text-emerald-500 font-mono text-[11px]';
+            icon.setAttribute('class', 'h-3.5 w-3.5 text-emerald-500');
+            drawerStatus.innerText = 'Linked & Synchronizing';
+            drawerStatus.className = 'text-emerald-500 font-semibold';
+            emailDisplay.innerText = config.share_email;
+            linkUrl.href = `https://docs.google.com/spreadsheets/d/${config.sheet_id}`;
+            linkUrl.classList.remove('hidden');
+          }
         }
       } catch (e) {
-        console.error('Failed to fetch ingredients from backend:', e);
+        console.error(e);
       }
     }
 
-    async function handleGlobalReset() {
+    // Get ingredients
+    async function fetchIngredients() {
       if (isBackendOnline) {
         try {
-          const res = await fetch(`${BACKEND_BASE_URL}/api/ingredients/reset`, { method: 'POST' });
+          const res = await fetch(`${BACKEND_BASE_URL}/api/ingredients`, {
+            headers: { 'X-Tenant-ID': '1' }
+          });
           if (res.ok) {
-            showToast('Database stock metrics reset to deficits');
-            fetchIngredientsFromBackend();
+            localIngredients = await res.json();
+          }
+        } catch (e) {
+          console.error('Failed to fetch backend ingredients', e);
+        }
+      }
+      renderInventory();
+    }
+
+    // Render alerts & table rows
+    function renderInventory() {
+      const alertsList = document.getElementById('restock-alerts-list');
+      const alertsContainer = document.getElementById('restock-alerts-container');
+      const tbody = document.getElementById('inventory-table-tbody');
+      
+      alertsList.innerHTML = '';
+      tbody.innerHTML = '';
+
+      let lowStockItemsCount = 0;
+
+      localIngredients.forEach(ing => {
+        const isLow = ing.current_stock < ing.safety_par_level;
+        
+        // Add to low-stock alert panel
+        if (isLow) {
+          lowStockItemsCount++;
+          alertsList.innerHTML += `
+            <li class="flex items-center justify-between border border-rose-500/20 bg-rose-955/20 rounded-lg p-2.5 text-rose-300">
+              <span><strong>${ing.item_name}</strong> (${ing.SKU_code})</span>
+              <span class="bg-rose-500/10 px-2 py-0.5 rounded text-[10px] font-bold">
+                Stock: ${ing.current_stock} / Par: ${ing.safety_par_level} ${ing.unit_type}
+              </span>
+            </li>
+          `;
+        }
+
+        // Add to table
+        const rowClass = isLow ? 'bg-amber-955/5 border-l-2 border-l-amber-500/40 hover:bg-amber-955/10' : 'hover:bg-charcoal-700/30';
+        const badgeClass = isLow ? 'bg-rose-955 border border-rose-500/30 text-rose-500 animate-pulse' : 'bg-emerald-955 border border-emerald-500/30 text-emerald-500';
+        const badgeText = isLow ? 'LOW STOCK' : 'NORMAL';
+
+        tbody.innerHTML += `
+          <tr class="${rowClass} transition-colors border-b border-charcoal-700/40">
+            <td class="p-4">
+              <span class="font-bold text-charcoal-50 block">${ing.item_name}</span>
+              <span class="text-[10px] text-charcoal-400 font-mono">${ing.SKU_code}</span>
+            </td>
+            <td class="p-4 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <input type="number" step="0.1" value="${ing.current_stock}" 
+                  class="stock-inline-input w-16 bg-charcoal-900 border border-charcoal-700 rounded px-1.5 py-1 text-center font-bold text-xs text-charcoal-50 focus:outline-none focus:border-emerald-500" 
+                  data-id="${ing.id}" data-sku="${ing.SKU_code}" />
+                <span class="text-charcoal-400 text-[10px] font-mono select-none">${ing.unit_type}</span>
+              </div>
+            </td>
+            <td class="p-4 text-center text-charcoal-200">
+              ${ing.safety_par_level} <span class="text-charcoal-400 text-[10px]">${ing.unit_type}</span>
+            </td>
+            <td class="p-4 text-charcoal-300">
+              <span class="block text-xs font-semibold">$${ing.cost_per_unit.toFixed(2)} / unit</span>
+              <span class="text-[10px] text-charcoal-400 truncate max-w-[120px] block">${ing.vendor_name}</span>
+            </td>
+            <td class="p-4 text-center">
+              <span class="inline-block px-2.5 py-0.5 rounded text-[9px] font-bold tracking-wider ${badgeClass}">
+                ${badgeText}
+              </span>
+            </td>
+            <td class="p-4 text-center">
+              <button class="save-inline-btn bg-emerald-500 hover:bg-emerald-600 text-charcoal-950 rounded p-1.5 font-bold transition-all" 
+                data-id="${ing.id}" title="Save inline stock level">
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      // Show alert box if any items are low
+      if (lowStockItemsCount > 0) {
+        alertsContainer.classList.remove('hidden');
+      } else {
+        alertsContainer.classList.add('hidden');
+      }
+
+      // Re-attach inline save buttons event listeners
+      document.querySelectorAll('.save-inline-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = parseInt(btn.getAttribute('data-id'));
+          // Find input with same id
+          const input = document.querySelector(`.stock-inline-input[data-id="${id}"]`);
+          if (input) {
+            const stock = parseFloat(input.value);
+            if (!isNaN(stock)) {
+              await updateSingleStock(id, stock);
+            }
+          }
+        });
+      });
+
+      // Support hitting Enter in inline inputs
+      document.querySelectorAll('.stock-inline-input').forEach(input => {
+        input.addEventListener('keydown', async (e) => {
+          if (e.key === 'Enter') {
+            const id = parseInt(input.getAttribute('data-id'));
+            const stock = parseFloat(input.value);
+            if (!isNaN(stock)) {
+              await updateSingleStock(id, stock);
+            }
+          }
+        });
+      });
+    }
+
+    // Save individual stock update
+    async function updateSingleStock(id, stock) {
+      const item = localIngredients.find(i => i.id === id);
+      if (!item) return;
+
+      if (isBackendOnline) {
+        try {
+          const res = await fetch(`${BACKEND_BASE_URL}/api/ingredients/${id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Tenant-ID': '1'
+            },
+            body: JSON.stringify({ current_stock: stock })
+          });
+          if (res.ok) {
+            const updated = await res.json();
+            item.current_stock = updated.current_stock;
+            showToast(`Updated ${item.item_name} stock to ${stock} ${item.unit_type}`);
+            renderInventory();
+          } else {
+            showToast('Failed to sync stock updates', 'error');
           }
         } catch (e) {
           console.error(e);
+          showToast('Connection error updating stock', 'error');
         }
       } else {
-        // Reset local state variables to default deficit values
-        localIngredients[0].current_stock = 4.0; localIngredients[0].cost_per_unit = 15.00;
-        localIngredients[1].current_stock = 3.0; localIngredients[1].cost_per_unit = 12.00;
-        localIngredients[2].current_stock = 2.0; localIngredients[2].cost_per_unit = 5.00;
-        localIngredients[3].current_stock = 22.0; localIngredients[3].cost_per_unit = 45.00;
-        localIngredients[4].current_stock = 6.5; localIngredients[4].cost_per_unit = 8.50;
-        
-        renderVoiceIngredients();
-        refreshProcurementDrafts();
-        
-        // Reset invoice auditor panel
-        document.getElementById('invoice-results-panel').classList.add('hidden');
-        document.getElementById('invoice-empty-state').classList.remove('hidden');
-        
-        showToast('Local database mock values reset to default deficits');
+        // Sandbox local state update
+        item.current_stock = stock;
+        showToast(`[Sandbox] Set ${item.item_name} stock to ${stock} ${item.unit_type}`);
+        renderInventory();
       }
     }
 
-    // Tabs Navigation Setup
-    function initNavigation() {
-      const desktopTabs = {
-        'tab-btn-voice': 'view-voice',
-        'tab-btn-invoice': 'view-invoice',
-        'tab-btn-procure': 'view-procure'
-      };
-
-      const mobileTabs = {
-        'mobile-tab-btn-voice': 'view-voice',
-        'mobile-tab-btn-invoice': 'view-invoice',
-        'mobile-tab-btn-procure': 'view-procure'
-      };
-
-      function switchSection(targetId, activeBtnId) {
-        // Hide all views
-        document.querySelectorAll('.view-section').forEach(sec => sec.classList.add('hidden'));
-        // Show target view
-        document.getElementById(targetId).classList.remove('hidden');
-
-        // Toggle desktop active classes
-        document.querySelectorAll('.nav-tab').forEach(btn => {
-          btn.className = 'nav-tab px-4 py-2 text-sm font-medium rounded-full text-charcoal-400 hover:text-charcoal-50 transition-all';
-        });
-        
-        // Find desktop matching button
-        const desktopBtnId = activeBtnId.replace('mobile-', '');
-        const activeDesktopBtn = document.getElementById(desktopBtnId) || document.getElementById(activeBtnId);
-        if (activeDesktopBtn) {
-          activeDesktopBtn.className = 'nav-tab active-tab px-4 py-2 text-sm font-medium rounded-full bg-emerald-500 text-charcoal-950 font-semibold transition-all';
-        }
-
-        // Toggle mobile active classes
-        document.querySelectorAll('.mobile-nav-tab').forEach(btn => {
-          btn.className = 'mobile-nav-tab flex flex-col items-center justify-center flex-1 text-charcoal-400';
-        });
-        
-        // Find mobile matching button
-        const mobBtnId = activeBtnId.startsWith('mobile-') ? activeBtnId : 'mobile-' + activeBtnId;
-        const activeMobileBtn = document.getElementById(mobBtnId);
-        if (activeMobileBtn) {
-          activeMobileBtn.className = 'mobile-nav-tab flex flex-col items-center justify-center flex-1 text-emerald-500 font-semibold';
-        }
-      }
-
-      // Add desktop click listeners
-      Object.keys(desktopTabs).forEach(btnId => {
-        document.getElementById(btnId).addEventListener('click', () => {
-          switchSection(desktopTabs[btnId], btnId);
-        });
-      });
-
-      // Add mobile click listeners
-      Object.keys(mobileTabs).forEach(btnId => {
-        document.getElementById(btnId).addEventListener('click', () => {
-          switchSection(mobileTabs[btnId], btnId);
-        });
-      });
-
-      // Style active tab initially
-      document.getElementById('tab-btn-voice').className = 'nav-tab active-tab px-4 py-2 text-sm font-medium rounded-full bg-emerald-500 text-charcoal-950 font-semibold transition-all';
-    }
-
-
-    let mediaRecorder = null;
-    let audioChunks = [];
-
-    // ─── VOICE VIEW CODE ───
-    function initVoiceView() {
-      renderVoiceIngredients();
-
+    // Speech-to-text setup
+    function initSpeechRecognition() {
       const recordBtn = document.getElementById('mic-record-btn');
-      const micStatusLabel = document.getElementById('mic-status-label');
       const micPulseRing = document.getElementById('mic-pulse-ring');
-      const ticker = document.getElementById('transcript-ticker');
-      const voiceResults = document.getElementById('voice-sync-results');
-      const updatedList = document.getElementById('voice-updated-list');
+      const micStatusLabel = document.getElementById('mic-status-label');
+      const voiceTicker = document.getElementById('voice-ticker');
+      const textArea = document.getElementById('inventory-text-input');
 
+      let recognition = null;
       let isRecording = false;
 
-      recordBtn.addEventListener('click', async () => {
-        isRecording = !isRecording;
-        if (isRecording) {
-          try {
-            // Request microphone access
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            audioChunks = [];
-            mediaRecorder = new MediaRecorder(stream);
-            
-            mediaRecorder.ondataavailable = (event) => {
-              if (event.data.size > 0) {
-                audioChunks.push(event.data);
-              }
-            };
-            
-            mediaRecorder.onstop = async () => {
-              const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-              const audioFile = new File([audioBlob], 'voice_inventory.wav', { type: 'audio/wav' });
-              
-              micStatusLabel.innerText = 'PROCESSING...';
-              micStatusLabel.className = 'mt-4 text-sm font-semibold text-charcoal-400 font-mono tracking-wide';
-              
-              await handleVoiceInventorySync(audioFile);
-              micStatusLabel.innerText = 'TAP TO COUNT';
-            };
-            
-            mediaRecorder.start();
-            
-            // Turn ON recording UI
-            recordBtn.classList.remove('bg-charcoal-700', 'border-charcoal-600', 'text-charcoal-50');
-            recordBtn.classList.add('bg-emerald-500', 'border-emerald-600', 'text-charcoal-950');
-            micPulseRing.classList.remove('hidden');
-            micStatusLabel.innerText = 'LISTENING...';
-            micStatusLabel.className = 'mt-4 text-sm font-bold text-emerald-500 font-mono tracking-wide animate-pulse';
-            ticker.innerText = '"Recording microphone... Speak counts, then tap again to stop."';
-          } catch (e) {
-            console.error('Microphone access denied:', e);
-            showToast('Microphone access denied. Using simulation instead.', 'warning');
-            
-            // Revert record state
-            isRecording = false;
-            // Trigger simulation
-            const simulatedPhrases = [
-              "Onions, 9 bags",
-              "Cheese, 7 blocks; Onions, 12 bags",
-              "Tomato, 11 kg; Flour, 8 bags"
-            ];
-            const randPhrase = simulatedPhrases[Math.floor(Math.random() * simulatedPhrases.length)];
-            await handleVoiceInventorySync(randPhrase);
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+          isRecording = true;
+          recordBtn.classList.remove('bg-charcoal-700', 'border-charcoal-600', 'text-charcoal-50');
+          recordBtn.classList.add('bg-rose-500', 'border-rose-600', 'text-charcoal-950');
+          micPulseRing.classList.remove('hidden');
+          micStatusLabel.innerText = 'LISTENING...';
+          micStatusLabel.className = 'mt-4 text-xs font-bold text-rose-500 font-mono tracking-wider animate-pulse';
+          voiceTicker.innerText = 'Listening to speech... Speak counts (e.g. "Dal 12 kg and Atta 8 bags").';
+        };
+
+        recognition.onresult = (event) => {
+          let interimTranscript = '';
+          let finalTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript;
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
           }
+          const textToShow = finalTranscript || interimTranscript;
+          voiceTicker.innerText = `"${textToShow}"`;
+          if (finalTranscript) {
+            textArea.value = finalTranscript;
+          }
+        };
+
+        recognition.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+          voiceTicker.innerText = `Speech error: ${event.error}. Please type.`;
+        };
+
+        recognition.onend = () => {
+          isRecording = false;
+          recordBtn.classList.add('bg-charcoal-700', 'border-charcoal-600', 'text-charcoal-50');
+          recordBtn.classList.remove('bg-rose-500', 'border-rose-600', 'text-charcoal-950');
+          micPulseRing.classList.add('hidden');
+          micStatusLabel.innerText = 'TAP TO VOICE COUNT';
+          micStatusLabel.className = 'mt-4 text-xs font-semibold text-charcoal-400 font-mono tracking-wider';
+          if (!textArea.value.trim()) {
+            voiceTicker.innerText = 'Speech finished. Input field empty.';
+          } else {
+            voiceTicker.innerText = 'Speech transcribed! Review or edit text below.';
+          }
+        };
+
+        recordBtn.addEventListener('click', () => {
+          if (isRecording) {
+            recognition.stop();
+          } else {
+            textArea.value = '';
+            recognition.start();
+          }
+        });
+      } else {
+        // Fallback for unsupported browsers
+        recordBtn.addEventListener('click', () => {
+          showToast('Voice Recognition is not supported by your browser. Please type or use simulation shortcuts.', 'warning');
+          voiceTicker.innerText = 'Web Speech recognition not supported. Please type instead.';
+        });
+      }
+    }
+
+    // Setup other events
+    function setupEventListeners() {
+      const sheetsStatus = document.getElementById('sheets-status');
+      const sheetsDrawer = document.getElementById('sheets-info-drawer');
+      const closeDrawer = document.getElementById('close-sheets-drawer');
+      const toggleAddFormBtn = document.getElementById('toggle-add-form');
+      const addForm = document.getElementById('add-ing-form');
+
+      // Sync sheets drawer visibility
+      sheetsStatus.addEventListener('click', () => {
+        sheetsDrawer.classList.toggle('hidden');
+      });
+      closeDrawer.addEventListener('click', () => {
+        sheetsDrawer.classList.add('hidden');
+      });
+
+      // Toggle Custom Add form
+      toggleAddFormBtn.addEventListener('click', () => {
+        addForm.classList.toggle('hidden');
+        if (addForm.classList.contains('hidden')) {
+          toggleAddFormBtn.innerText = 'Toggle Form';
         } else {
-          // Stop recording
-          if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            mediaRecorder.stop();
-            mediaRecorder.stream.getTracks().forEach(track => track.stop());
-            
-            // Reset UI
-            recordBtn.classList.remove('bg-emerald-500', 'border-emerald-600', 'text-charcoal-950');
-            recordBtn.classList.add('bg-charcoal-700', 'border-charcoal-600', 'text-charcoal-50');
-            micPulseRing.classList.add('hidden');
-          }
+          toggleAddFormBtn.innerText = '✕ Close Form';
         }
       });
 
-      // Quick simulated click handlers
+      // Quick simulations
       document.querySelectorAll('.voice-sim-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const phrase = btn.getAttribute('data-phrase');
-          handleVoiceInventorySync(phrase);
+          document.getElementById('inventory-text-input').value = phrase;
+          document.getElementById('voice-ticker').innerText = `"${phrase}" (Simulated Phrase copied)`;
+          handleTextSync(phrase);
         });
       });
 
-      // Clear stocks event listener
+      // Submit spoken/typed counts
+      document.getElementById('process-stock-btn').addEventListener('click', () => {
+        const text = document.getElementById('inventory-text-input').value.trim();
+        if (text) {
+          handleTextSync(text);
+        } else {
+          showToast('Please type a query or speak first.', 'warning');
+        }
+      });
+
+      // Global Reset Demo
+      document.getElementById('demo-reset-btn').addEventListener('click', async () => {
+        if (isBackendOnline) {
+          try {
+            const res = await fetch(`${BACKEND_BASE_URL}/api/ingredients/reset`, {
+              method: 'POST',
+              headers: { 'X-Tenant-ID': '1' }
+            });
+            if (res.ok) {
+              showToast('Database reset to standard items & stocks');
+              await fetchIngredients();
+            } else {
+              showToast('Reset failed', 'error');
+            }
+          } catch (e) {
+            console.error(e);
+            showToast('API reset call failed', 'error');
+          }
+        } else {
+          // Reset local copy
+          localIngredients = [
+            { id: 1, SKU_code: 'SKU-ATT-01', item_name: 'Atta', current_stock: 2.0, safety_par_level: 5.0, unit_type: 'bags', cost_per_unit: 12.00, vendor_name: 'Desi Grains Co.' },
+            { id: 2, SKU_code: 'SKU-DAL-02', item_name: 'Dal', current_stock: 8.0, safety_par_level: 10.0, unit_type: 'kg', cost_per_unit: 4.50, vendor_name: 'Desi Grains Co.' },
+            { id: 3, SKU_code: 'SKU-RIC-03', item_name: 'Rice', current_stock: 3.0, safety_par_level: 8.0, unit_type: 'bags', cost_per_unit: 18.00, vendor_name: 'Desi Grains Co.' },
+            { id: 4, SKU_code: 'SKU-ONN-04', item_name: 'Onions', current_stock: 18.0, safety_par_level: 15.0, unit_type: 'kg', cost_per_unit: 2.50, vendor_name: 'Fresh Produce Co.' },
+            { id: 5, SKU_code: 'SKU-POT-05', item_name: 'Potato', current_stock: 12.0, safety_par_level: 20.0, unit_type: 'kg', cost_per_unit: 1.80, vendor_name: 'Fresh Produce Co.' },
+            { id: 6, SKU_code: 'SKU-SUG-06', item_name: 'Sugar', current_stock: 4.0, safety_par_level: 10.0, unit_type: 'kg', cost_per_unit: 3.00, vendor_name: 'Sysco' }
+          ];
+          showToast('[Sandbox] Reset local values to defaults');
+          renderInventory();
+        }
+      });
+
+      // Clear Stocks event
       document.getElementById('clear-stocks-btn').addEventListener('click', async () => {
         if (isBackendOnline) {
           try {
             const res = await fetch(`${BACKEND_BASE_URL}/api/ingredients/clear-stocks`, {
               method: 'POST',
-              headers: {
-                'X-Tenant-ID': '1'
-              }
+              headers: { 'X-Tenant-ID': '1' }
             });
             if (res.ok) {
-              showToast('Database stock metrics cleared to 0.0');
-              fetchIngredientsFromBackend();
+              showToast('Database stocks cleared to 0.0');
+              await fetchIngredients();
+            } else {
+              showToast('Clear failed', 'error');
             }
           } catch (e) {
             console.error(e);
+            showToast('API clear call failed', 'error');
           }
         } else {
           localIngredients.forEach(ing => ing.current_stock = 0.0);
-          renderVoiceIngredients();
-          refreshProcurementDrafts();
-          showToast('Local mock database stocks cleared to 0.0');
+          showToast('[Sandbox] Cleared local stock caches');
+          renderInventory();
         }
       });
 
-      // Toggle Add Ingredient form visibility
-      const toggleFormBtn = document.getElementById('toggle-add-ing-btn');
-      const formContainer = document.getElementById('add-ing-form-container');
-      toggleFormBtn.addEventListener('click', () => {
-        formContainer.classList.toggle('hidden');
-        if (formContainer.classList.contains('hidden')) {
-          toggleFormBtn.innerText = '➕ Register New Ingredient SKU';
-        } else {
-          toggleFormBtn.innerText = '✕ Close Registration Form';
-        }
-      });
-
-      // Save ingredient click handler
+      // Save custom SKU
       document.getElementById('save-new-ing-btn').addEventListener('click', async () => {
         const name = document.getElementById('new-ing-name').value.trim();
         const sku = document.getElementById('new-ing-sku').value.trim();
@@ -869,7 +719,7 @@ import Layout from '../layouts/Layout.astro';
         const vendor = document.getElementById('new-ing-vendor').value.trim();
 
         if (!name || !sku || !unit || isNaN(par) || isNaN(cost) || !vendor) {
-          showToast('Please fill out all registration fields.', 'error');
+          showToast('Please fill out all custom fields.', 'error');
           return;
         }
 
@@ -893,9 +743,9 @@ import Layout from '../layouts/Layout.astro';
               },
               body: JSON.stringify(payload)
             });
-
             if (res.ok) {
-              showToast(`${name} registered successfully!`);
+              showToast(`Registered SKU ${sku} (${name})`);
+              
               // Clear fields
               document.getElementById('new-ing-name').value = '';
               document.getElementById('new-ing-sku').value = '';
@@ -903,660 +753,189 @@ import Layout from '../layouts/Layout.astro';
               document.getElementById('new-ing-par').value = '';
               document.getElementById('new-ing-cost').value = '';
               document.getElementById('new-ing-vendor').value = '';
-              formContainer.classList.add('hidden');
-              toggleFormBtn.innerText = '➕ Register New Ingredient SKU';
-              
-              fetchIngredientsFromBackend();
+              addForm.classList.add('hidden');
+              toggleAddFormBtn.innerText = 'Toggle Form';
+
+              await fetchIngredients();
             } else {
               const err = await res.json();
-              showToast(err.detail || 'Failed to save ingredient', 'error');
+              showToast(err.detail || 'Failed to save item', 'error');
             }
           } catch (e) {
             console.error(e);
-            showToast('API connection error', 'error');
+            showToast('API save custom item failed', 'error');
           }
         } else {
           // Push locally
           const newId = localIngredients.length + 1;
           localIngredients.push({ id: newId, ...payload });
+          showToast(`[Sandbox] Saved ${name} locally`);
           
-          showToast(`${name} registered locally! Ready for counts.`);
-          // Clear fields
           document.getElementById('new-ing-name').value = '';
           document.getElementById('new-ing-sku').value = '';
           document.getElementById('new-ing-unit').value = '';
           document.getElementById('new-ing-par').value = '';
           document.getElementById('new-ing-cost').value = '';
           document.getElementById('new-ing-vendor').value = '';
-          formContainer.classList.add('hidden');
-          toggleFormBtn.innerText = '➕ Register New Ingredient SKU';
-          
-          renderVoiceIngredients();
-          refreshProcurementDrafts();
+          addForm.classList.add('hidden');
+          toggleAddFormBtn.innerText = 'Toggle Form';
+
+          renderInventory();
         }
       });
     }
 
-    function renderVoiceIngredients() {
-      const grid = document.getElementById('voice-ingredients-grid');
-      grid.innerHTML = '';
-
-      localIngredients.forEach(ing => {
-        const isDeficit = ing.current_stock < ing.safety_par_level;
-        const colorClass = isDeficit ? 'border-amber-500/20 bg-amber-950/10 text-amber-500' : 'border-charcoal-700 bg-charcoal-900 text-charcoal-400';
-        grid.innerHTML += `
-          <div class="border p-2.5 rounded-lg ${colorClass} flex flex-col justify-between font-mono">
-            <span class="font-bold text-charcoal-50 truncate">${ing.item_name}</span>
-            <div class="flex justify-between items-center mt-1 text-[11px]">
-              <span>Stock: <strong>${ing.current_stock}</strong></span>
-              <span>Par: <strong>${ing.safety_par_level}</strong></span>
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    async function handleVoiceInventorySync(input) {
-      const ticker = document.getElementById('transcript-ticker');
-      const voiceResults = document.getElementById('voice-sync-results');
-      const updatedList = document.getElementById('voice-updated-list');
-
-      const isFile = input instanceof File;
-      if (!isFile) {
-        ticker.innerText = `"${input}"`;
-      } else {
-        ticker.innerText = '"Uploading and transcribing voice counts..."';
-      }
-
-      if (isBackendOnline) {
-        try {
-          let file = input;
-          if (!isFile) {
-            // Generate simulated audio file if phrase button was clicked
-            const blob = new Blob([input], { type: 'text/plain' });
-            file = new File([blob], 'simulated_audio.wav', { type: 'audio/wav' });
-          }
-
-          const formData = new FormData();
-          formData.append('file', file);
-          formData.append('tenant_id', '1');
-
-          const res = await fetch(`${BACKEND_BASE_URL}/api/inventory/voice-upload`, {
-            method: 'POST',
-            headers: {
-              'X-Tenant-ID': '1'
-            },
-            body: formData
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            ticker.innerText = `"${data.transcript}"`;
-            
-            // Pop updated lists
-            updatedList.innerHTML = '';
-            data.updated_ingredients.forEach(item => {
-              updatedList.innerHTML += `
-                <li class="flex justify-between items-center text-charcoal-200">
-                  <span>${item.item_name}:</span>
-                  <span>${item.old_stock} ➔ <strong class="text-emerald-500 font-bold">${item.new_stock}</strong> ${item.unit}</span>
-                </li>
-              `;
-            });
-            voiceResults.classList.remove('hidden');
-            showToast('Voice Count synced with backend database!');
-            fetchIngredientsFromBackend();
-          } else {
-            throw new Error('API Sync Failed');
-          }
-        } catch (e) {
-          console.error(e);
-          showToast('Failed to connect to API, running local fallback sync.', 'warning');
-          runLocalVoiceSync(isFile ? "Onions, 9 bags; Cheddar Cheese, 5 blocks" : input);
-        }
-      } else {
-        runLocalVoiceSync(isFile ? "Onions, 9 bags; Cheddar Cheese, 5 blocks" : input);
-      }
-    }
-
-    function runLocalVoiceSync(phrase) {
-      const voiceResults = document.getElementById('voice-sync-results');
-      const updatedList = document.getElementById('voice-updated-list');
+    // Process typed / transcript counts text
+    async function handleTextSync(text) {
+      const resultPanel = document.getElementById('sync-results');
+      const updatedList = document.getElementById('updated-stock-list');
       
-      // Parse phrases manually: "Onions, 9 bags" -> Onions, 9.0, bags
-      const parts = phrase.split(';');
       updatedList.innerHTML = '';
 
-      parts.forEach(part => {
-        const itemMatch = part.trim().match(/([a-zA-Z\s]+),\s*([0-9.]+)\s*([a-zA-Z]+)/);
-        if (itemMatch) {
-          const rawName = itemMatch[1].trim();
-          const quantity = parseFloat(itemMatch[2]);
-          const unit = itemMatch[3].trim();
-
-          // Search inside local inventory
-          const ingredient = localIngredients.find(ing => ing.item_name.toLowerCase().includes(rawName.toLowerCase()));
-          if (ingredient) {
-            const oldStock = ingredient.current_stock;
-            ingredient.current_stock = quantity;
-            
-            updatedList.innerHTML += `
-              <li class="flex justify-between items-center text-charcoal-200">
-                <span>${ingredient.item_name}:</span>
-                <span>${oldStock} ➔ <strong class="text-emerald-500 font-bold">${ingredient.current_stock}</strong> ${ingredient.unit_type}</span>
-              </li>
-            `;
-          }
-        }
-      });
-
-      renderVoiceIngredients();
-      refreshProcurementDrafts();
-      voiceResults.classList.remove('hidden');
-      showToast('Offline cache active: stock saved locally!');
-    }
-
-
-    // ─── INVOICE SCANNER CODE ───
-    function initInvoiceView() {
-      const dropzone = document.getElementById('invoice-dropzone');
-      const fileInput = document.getElementById('invoice-file-input');
-      const emptyState = document.getElementById('invoice-empty-state');
-      const loadingSkeleton = document.getElementById('invoice-loading-skeleton');
-      const resultsPanel = document.getElementById('invoice-results-panel');
-
-      // Click to choose file trigger
-      dropzone.addEventListener('click', () => fileInput.click());
-
-      // File drag-over logic
-      dropzone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropzone.classList.add('border-emerald-500', 'bg-emerald-950/10');
-      });
-
-      dropzone.addEventListener('dragleave', () => {
-        dropzone.classList.remove('border-emerald-500', 'bg-emerald-950/10');
-      });
-
-      dropzone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropzone.classList.remove('border-emerald-500', 'bg-emerald-950/10');
-        if (e.dataTransfer.files.length > 0) {
-          handleInvoiceUpload(e.dataTransfer.files[0]);
-        }
-      });
-
-      fileInput.addEventListener('change', () => {
-        if (fileInput.files.length > 0) {
-          handleInvoiceUpload(fileInput.files[0]);
-        }
-      });
-
-      // Click simulate invoice buttons
-      document.querySelectorAll('.invoice-sim-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation(); // Stop trigger input click
-          const vendor = btn.getAttribute('data-vendor');
-          simulateInvoiceAudit(vendor);
-        });
-      });
-    }
-
-    async function handleInvoiceUpload(file) {
-      const emptyState = document.getElementById('invoice-empty-state');
-      const loadingSkeleton = document.getElementById('invoice-loading-skeleton');
-      const resultsPanel = document.getElementById('invoice-results-panel');
-
-      // Toggle loading states
-      emptyState.classList.add('hidden');
-      resultsPanel.classList.add('hidden');
-      loadingSkeleton.classList.remove('hidden');
-
       if (isBackendOnline) {
         try {
-          const formData = new FormData();
-          formData.append('file', file);
-          formData.append('tenant_id', '1');
-
-          const res = await fetch(`${BACKEND_BASE_URL}/api/procurement/upload-invoice`, {
-            method: 'POST',
-            headers: {
-              'X-Tenant-ID': '1'
-            },
-            body: formData
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            renderInvoiceAuditData(data);
-            showToast('Invoice uploaded & price audited successfully!');
-            fetchIngredientsFromBackend();
-          } else {
-            throw new Error('Upload Audit Failed');
-          }
-        } catch (e) {
-          console.error(e);
-          showToast('Backend upload failed, running local mock audit instead.', 'warning');
-          simulateInvoiceAudit(file.name.includes('sys') ? 'Sysco' : 'Fresh');
-        }
-      } else {
-        // Fallback simulate
-        setTimeout(() => {
-          simulateInvoiceAudit(file.name.toLowerCase().includes('sys') ? 'Sysco' : 'Fresh');
-        }, 1500);
-      }
-    }
-
-    function simulateInvoiceAudit(vendorKey) {
-      let data = null;
-
-      if (vendorKey === 'Sysco') {
-        data = {
-          vendor_name: 'Sysco Foodservices',
-          invoice_number: 'INV-SYS-99418',
-          total_amount: 215.50,
-          items: [
-            { item_name: 'Cheddar Cheese', quantity: 10.0, unit_price: 15.50, price_anomaly: true, previous_price: 12.00 },
-            { item_name: 'Flour', quantity: 5.0, unit_price: 8.50, price_anomaly: false, previous_price: 8.50 }
-          ]
-        };
-      } else {
-        data = {
-          vendor_name: 'Fresh Produce Co.',
-          invoice_number: 'INV-FPC-88127',
-          total_amount: 145.00,
-          items: [
-            { item_name: 'Onions', quantity: 6.0, unit_price: 19.50, price_anomaly: true, previous_price: 15.00 },
-            { item_name: 'Tomato', quantity: 8.0, unit_price: 5.00, price_anomaly: false, previous_price: 5.00 }
-          ]
-        };
-      }
-
-      // Sync local state as if the database updated baseline values
-      data.items.forEach(item => {
-        const localIng = localIngredients.find(ing => ing.item_name.toLowerCase() === item.item_name.lowerCase);
-        if (localIng) {
-          localIng.cost_per_unit = item.unit_price; // update latest baseline price
-        }
-      });
-
-      renderInvoiceAuditData(data);
-      refreshProcurementDrafts();
-      showToast(`Simulated price audit complete for: ${data.vendor_name}`);
-    }
-
-    function renderInvoiceAuditData(data) {
-      const emptyState = document.getElementById('invoice-empty-state');
-      const loadingSkeleton = document.getElementById('invoice-loading-skeleton');
-      const resultsPanel = document.getElementById('invoice-results-panel');
-      const tbody = document.getElementById('invoice-items-tbody');
-
-      loadingSkeleton.classList.add('hidden');
-      emptyState.classList.add('hidden');
-      resultsPanel.classList.remove('hidden');
-
-      // Set headers
-      document.getElementById('invoice-vendor-name').innerText = data.vendor_name;
-      document.getElementById('invoice-doc-number').innerText = `#${data.invoice_number}`;
-      document.getElementById('invoice-total-cost').innerText = `$${data.total_amount.toFixed(2)}`;
-
-      tbody.innerHTML = '';
-      let anomalyDetected = false;
-
-      data.items.forEach(item => {
-        let statusBadge = `<span class="px-2 py-0.5 rounded bg-emerald-950/50 text-emerald-500 border border-emerald-500/20 font-bold font-mono text-[10px]">Normal</span>`;
-        let priceDiffMarkup = `<span class="text-charcoal-400 font-mono">$${item.previous_price ? item.previous_price.toFixed(2) : '-'}</span>`;
-
-        if (item.price_anomaly) {
-          anomalyDetected = true;
-          const diffPct = item.previous_price ? Math.round(((item.unit_price - item.previous_price) / item.previous_price) * 100) : 0;
-          statusBadge = `
-            <div class="flex items-center gap-1 text-amber-500 bg-amber-950/50 border border-amber-500/20 px-2 py-0.5 rounded font-bold font-mono text-[10px] w-fit">
-              <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-9 9-4-4-6 6" />
-              </svg>
-              +${diffPct}% Increase
-            </div>
-          `;
-          priceDiffMarkup = `<span class="text-rose-500 line-through font-mono">$${item.previous_price.toFixed(2)}</span>`;
-        }
-
-        tbody.innerHTML += `
-          <tr class="hover:bg-charcoal-800/40">
-            <td class="py-3 font-semibold text-charcoal-50">${item.item_name}</td>
-            <td class="py-3 font-mono text-charcoal-200">${item.quantity}</td>
-            <td class="py-3 font-mono text-charcoal-50 font-bold">$${item.unit_price.toFixed(2)}</td>
-            <td class="py-3 font-mono">${priceDiffMarkup}</td>
-            <td class="py-3">${statusBadge}</td>
-          </tr>
-        `;
-      });
-
-      const anomalyBanner = document.getElementById('anomaly-banner');
-      if (anomalyDetected) {
-        anomalyBanner.classList.remove('hidden');
-      } else {
-        anomalyBanner.classList.add('hidden');
-      }
-    }
-
-
-    // ─── SMART PROCUREMENT VIEW CODE ───
-    function initProcureView() {
-      refreshProcurementDrafts();
-      
-      document.getElementById('refresh-po-btn').addEventListener('click', () => {
-        if (isBackendOnline) {
-          fetchIngredientsFromBackend();
-        } else {
-          refreshProcurementDrafts();
-        }
-        showToast('AI Draft orders refreshed!');
-      });
-
-      // Modal buttons
-      document.getElementById('modal-close-btn').addEventListener('click', closeModal);
-      document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
-      document.getElementById('modal-save-btn').addEventListener('click', saveModalItemChanges);
-    }
-
-    async function refreshProcurementDrafts() {
-      const container = document.getElementById('vendor-panels-container');
-      
-      let draftResponse = null;
-
-      if (isBackendOnline) {
-        try {
-          const res = await fetch(`${BACKEND_BASE_URL}/api/procurement/draft-orders`, {
-            headers: {
-              'X-Tenant-ID': '1'
-            }
-          });
-          if (res.ok) {
-            draftResponse = await res.json();
-          }
-        } catch (e) {
-          console.error('Failed to fetch drafts from API:', e);
-        }
-      }
-
-      if (!draftResponse) {
-        // Calculate local forecasts & draft items grouped by vendor
-        draftResponse = calculateLocalDraftPOs();
-      }
-
-      activePOData = draftResponse.draft_orders;
-
-      // Update analytics stats card
-      document.getElementById('stat-critical-alerts').innerText = draftResponse.critical_stock_alerts;
-      document.getElementById('stat-pending-orders').innerText = draftResponse.pending_purchase_orders_count;
-      document.getElementById('stat-waste-saved').innerText = `$${draftResponse.total_waste_saved_estimate.toFixed(2)}`;
-
-      if (activePOData.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-12 text-charcoal-400">
-            <svg class="h-12 w-12 text-charcoal-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h4 class="text-sm font-semibold text-charcoal-200">Inventory Stocks Fully Stocked</h4>
-            <p class="text-xs mt-1">All item levels are currently above their safety thresholds. No replenishment is recommended.</p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = '';
-
-      activePOData.forEach((vendorPO, vIdx) => {
-        let itemsRows = '';
-        
-        vendorPO.items.forEach((item, itemIdx) => {
-          itemsRows += `
-            <tr class="border-b border-charcoal-700/30 hover:bg-charcoal-800/20">
-              <td class="py-3 font-semibold text-charcoal-50">${item.item_name}</td>
-              <td class="py-3 font-mono text-charcoal-400">${item.current_stock} / ${item.safety_par_level} ${item.unit}</td>
-              <td class="py-3 font-mono text-charcoal-200">${item.forecasted_demand} ${item.unit}</td>
-              <td class="py-3 font-mono text-emerald-500 font-bold">${item.recommended_order_qty} ${item.unit}</td>
-              <td class="py-3 font-mono text-charcoal-50 font-bold">$${item.total_cost.toFixed(2)}</td>
-              <td class="py-3 text-right">
-                <button class="edit-item-btn rounded border border-charcoal-700 hover:border-charcoal-600 bg-charcoal-900 hover:text-charcoal-50 px-2.5 py-1 text-[11px] font-mono transition-all" data-v-idx="${vIdx}" data-item-idx="${itemIdx}">
-                  ✏️ Edit
-                </button>
-              </td>
-            </tr>
-          `;
-        });
-
-        container.innerHTML += `
-          <div class="border border-charcoal-700 bg-charcoal-950/20 rounded-xl p-5" id="vendor-panel-${vIdx}">
-            <!-- Vendor info -->
-            <div class="flex flex-col sm:flex-row justify-between sm:items-center border-b border-charcoal-700 pb-3 mb-4 gap-2">
-              <div>
-                <span class="text-[10px] text-charcoal-400 font-mono block">SUPPLIER TARGET:</span>
-                <span class="text-base font-bold text-charcoal-50 flex items-center gap-1.5">
-                  🏢 ${vendorPO.vendor_name}
-                </span>
-              </div>
-              <div class="text-left sm:text-right font-mono">
-                <span class="text-[10px] text-charcoal-400 block">TOTAL ORDER COST:</span>
-                <span class="text-sm font-bold text-emerald-500" id="vendor-cost-${vIdx}">$${vendorPO.total_order_cost.toFixed(2)}</span>
-              </div>
-            </div>
-
-            <!-- Table -->
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr class="text-charcoal-400 border-b border-charcoal-700 font-mono">
-                    <th class="py-2.5 font-medium">Item Name</th>
-                    <th class="py-2.5 font-medium">Stock / Par</th>
-                    <th class="py-2.5 font-medium">7-Day Forecast Need</th>
-                    <th class="py-2.5 font-medium">Order Quantity</th>
-                    <th class="py-2.5 font-medium">Total Cost</th>
-                    <th class="py-2.5 font-medium text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-charcoal-700/20">
-                  ${itemsRows}
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Actions block -->
-            <div class="flex justify-end gap-2.5 mt-5">
-              <button class="send-po-btn rounded-lg bg-emerald-500 hover:bg-emerald-600 text-charcoal-950 font-bold text-xs px-4 py-2 flex items-center gap-1.5 transition-all shadow" data-v-idx="${vIdx}">
-                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-                Approve & Send Purchase Order
-              </button>
-            </div>
-          </div>
-        `;
-      });
-
-      // Bind button events inside dynamically injected elements
-      document.querySelectorAll('.edit-item-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const vIdx = parseInt(btn.getAttribute('data-v-idx'));
-          const itemIdx = parseInt(btn.getAttribute('data-item-idx'));
-          openEditModal(vIdx, itemIdx);
-        });
-      });
-
-      document.querySelectorAll('.send-po-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const vIdx = parseInt(btn.getAttribute('data-v-idx'));
-          handleSendPurchaseOrder(vIdx);
-        });
-      });
-    }
-
-    function calculateLocalDraftPOs() {
-      const vendor_groups_map = {};
-      let critical_alerts = 0;
-      let total_procurement_cost = 0.0;
-
-      const package_units = {
-        'bags': 5.0,
-        'blocks': 2.0,
-        'kg': 10.0,
-        'boxes': 1.0
-      };
-
-      localIngredients.forEach(ing => {
-        const forecasted_need = Math.round(ing.safety_par_level * 1.4 * 10) / 10;
-        const isDeficit = ing.current_stock < ing.safety_par_level;
-        
-        if (isDeficit) {
-          critical_alerts++;
-        }
-
-        if (isDeficit || (ing.current_stock < forecasted_need)) {
-          const raw_needed = forecasted_need + ing.safety_par_level - ing.current_stock;
-          if (raw_needed <= 0) return;
-
-          const unitStr = ing.unit_type.toLowerCase();
-          const pkgSize = package_units[unitStr] || 1.0;
-          const recommended_qty = Math.ceil(raw_needed / pkgSize) * pkgSize;
-
-          const total_cost = recommended_qty * ing.cost_per_unit;
-          total_procurement_cost += total_cost;
-
-          const draft = {
-            item_name: ing.item_name,
-            current_stock: ing.current_stock,
-            safety_par_level: ing.safety_par_level,
-            forecasted_demand: forecasted_need,
-            recommended_order_qty: recommended_qty,
-            unit: ing.unit_type,
-            cost_per_unit: ing.cost_per_unit,
-            total_cost: total_cost
-          };
-
-          const vendor = ing.vendor_name || 'Generic Supplier';
-          if (!vendor_groups_map[vendor]) {
-            vendor_groups_map[vendor] = [];
-          }
-          vendor_groups_map[vendor].push(draft);
-        }
-      });
-
-      const draft_orders = [];
-      Object.keys(vendor_groups_map).forEach(vendor => {
-        const items = vendor_groups_map[vendor];
-        const total_vendor_cost = items.reduce((sum, i) => sum + i.total_cost, 0);
-        draft_orders.push({
-          vendor_name: vendor,
-          items: items,
-          total_order_cost: total_vendor_cost
-        });
-      });
-
-      return {
-        draft_orders: draft_orders,
-        critical_stock_alerts: critical_alerts,
-        pending_purchase_orders_count: draft_orders.length,
-        total_waste_saved_estimate: critical_alerts * 45.20
-      };
-    }
-
-    // Modal Actions
-    function openEditModal(vIdx, itemIdx) {
-      const item = activePOData[vIdx].items[itemIdx];
-      editingPOVendorName = activePOData[vIdx].vendor_name;
-      editingPOItemIndex = itemIdx;
-
-      document.getElementById('modal-item-name').value = item.item_name;
-      document.getElementById('modal-item-qty').value = item.recommended_order_qty;
-      document.getElementById('modal-item-unit').innerText = item.unit;
-
-      document.getElementById('edit-modal').classList.remove('hidden');
-    }
-
-    function closeModal() {
-      document.getElementById('edit-modal').classList.add('hidden');
-    }
-
-    function saveModalItemChanges() {
-      const newQty = parseFloat(document.getElementById('modal-item-qty').value);
-      if (isNaN(newQty) || newQty < 0) {
-        showToast('Invalid quantity value entered', 'error');
-        return;
-      }
-
-      // Find inside local database list and alter recommended PO quantities
-      const vendorGroup = activePOData.find(group => group.vendor_name === editingPOVendorName);
-      if (vendorGroup) {
-        const item = vendorGroup.items[editingPOItemIndex];
-        
-        // Update stock forecast cost
-        item.recommended_order_qty = newQty;
-        item.total_cost = newQty * item.cost_per_unit;
-
-        // Recalculate totals
-        vendorGroup.total_order_cost = vendorGroup.items.reduce((sum, i) => sum + i.total_cost, 0);
-        
-        // Redraw page lists
-        closeModal();
-        showToast('Line item order quantity updated!');
-        
-        // Update stats
-        const container = document.getElementById('vendor-panels-container');
-        refreshProcurementDrafts();
-      }
-    }
-
-    async function handleSendPurchaseOrder(vIdx) {
-      const vendorName = activePOData[vIdx].vendor_name;
-      const orderTotal = activePOData[vIdx].total_order_cost;
-      const items = activePOData[vIdx].items;
-
-      showToast(`Dispatching PO to ${vendorName}...`);
-
-      if (isBackendOnline) {
-        try {
-          const res = await fetch(`${BACKEND_BASE_URL}/api/procurement/send-po`, {
+          const res = await fetch(`${BACKEND_BASE_URL}/api/inventory/voice-text-upload`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'X-Tenant-ID': '1'
             },
-            body: JSON.stringify({
-              vendor_name: vendorName,
-              items: items,
-              recipient_email: 'orders@vendor.com'
-            })
+            body: JSON.stringify({ text })
           });
 
           if (res.ok) {
             const data = await res.json();
-            showToast(`Purchase order approved & sent to ${vendorName} ($${orderTotal.toFixed(2)})!`);
+            
+            if (data.updated_ingredients && data.updated_ingredients.length > 0) {
+              resultPanel.classList.remove('hidden');
+              data.updated_ingredients.forEach(adj => {
+                updatedList.innerHTML += `
+                  <li class="flex justify-between items-center text-charcoal-200">
+                    <span><strong>${adj.item_name}</strong></span>
+                    <span class="text-emerald-400 font-bold">
+                      ${adj.old_stock} ➔ ${adj.new_stock} ${adj.unit}
+                    </span>
+                  </li>
+                `;
+              });
+              showToast(`Successfully synced counts to DB & Sheets`);
+            } else {
+              resultPanel.classList.add('hidden');
+              showToast('No matching items parsed from text.', 'warning');
+            }
+            
+            // Reload ingredients from backend
+            await fetchIngredients();
           } else {
-            throw new Error('PO Dispatch failed');
+            showToast('Backend text sync failed', 'error');
           }
         } catch (e) {
           console.error(e);
-          showToast(`Offline notice: PO simulated for ${vendorName} ($${orderTotal.toFixed(2)})`, 'warning');
+          showToast('Connection error processing count', 'error');
         }
       } else {
-        showToast(`Purchase order approved & dispatched to ${vendorName} ($${orderTotal.toFixed(2)})!`);
+        // Parse locally using a simple JS regex matcher for Sandbox Mode!
+        const parsed = parseTextSandbox(text);
+        if (parsed.length > 0) {
+          resultPanel.classList.remove('hidden');
+          parsed.forEach(adj => {
+            updatedList.innerHTML += `
+              <li class="flex justify-between items-center text-charcoal-200">
+                <span><strong>${adj.item_name}</strong></span>
+                <span class="text-emerald-400 font-bold">
+                  ${adj.old_stock} ➔ ${adj.new_stock} ${adj.unit}
+                </span>
+              </li>
+            `;
+          });
+          showToast(`[Sandbox] Synced stock adjustments locally`);
+          renderInventory();
+        } else {
+          resultPanel.classList.add('hidden');
+          showToast('No items parsed. Use format: "[Item] [Qty]"', 'warning');
+        }
       }
-      
-      // Animate slide-out panel deletion
-      const panel = document.getElementById(`vendor-panel-${vIdx}`);
-      panel.classList.add('transition-all', 'duration-500', 'transform', 'scale-95', 'opacity-0');
-      
-      setTimeout(() => {
-        // Remove from local list of draft orders
-        activePOData.splice(vIdx, 1);
-        
-        // Update remaining stats
-        const pendingSpan = document.getElementById('stat-pending-orders');
-        pendingSpan.innerText = activePOData.length;
-        
-        refreshProcurementDrafts();
-      }, 500);
     }
-  </script>
-</Layout>
+
+    // Local JS Regex Matcher for sandbox fallbacks
+    function parseTextSandbox(text) {
+      const adjustments = [];
+      const phrases = text.toLowerCase().split(/[;,\n]|and|then/);
+      
+      phrases.forEach(phrase => {
+        phrase = phrase.trim();
+        if (!phrase) return;
+        
+        // Find quantity
+        const numMatch = phrase.match(/(\d+(?:\.\d+)?)/);
+        if (!numMatch) return;
+        
+        const qty = parseFloat(numMatch[0]);
+        const numIdx = phrase.indexOf(numMatch[0]);
+        
+        // Simple name split
+        let itemQuery = '';
+        let unitText = 'units';
+        
+        const left = phrase.substring(0, numIdx).trim();
+        const right = phrase.substring(numIdx + numMatch[0].length).trim();
+        
+        // Determine name
+        if (!left || ['i have', 'we have', 'set', 'update', 'add'].includes(left)) {
+          // E.g., "5 bags of rice"
+          const rightClean = right.replace(/^of\s+/, '').trim();
+          const words = rightClean.split(' ');
+          if (words.length > 1 && ['bags', 'kg', 'boxes', 'packets', 'blocks'].includes(words[0])) {
+            unitText = words[0];
+            itemQuery = words.slice(1).join(' ');
+          } else {
+            itemQuery = rightClean;
+          }
+        } else {
+          // E.g., "rice 5 bags"
+          itemQuery = left.replace(/^(set|update|add|change)\s+/, '').replace(/\s+to$/, '');
+          const words = right.split(' ');
+          if (words.length > 0) {
+            unitText = words[0];
+          }
+        }
+
+        itemQuery = itemQuery.trim();
+        if (!itemQuery) return;
+
+        // Find match in local list
+        let bestMatch = null;
+        let highestScore = 0;
+        
+        localIngredients.forEach(ing => {
+          const nameLower = ing.item_name.toLowerCase();
+          let score = 0;
+          if (nameLower === itemQuery) {
+            score = 100;
+          } else if (nameLower.includes(itemQuery) || itemQuery.includes(nameLower)) {
+            score = 70;
+          }
+          
+          if (score > highestScore) {
+            highestScore = score;
+            bestMatch = ing;
+          }
+        });
+
+        if (bestMatch && highestScore >= 70) {
+          const oldStock = bestMatch.current_stock;
+          bestMatch.current_stock = qty;
+          adjustments.push({
+            item_name: bestMatch.item_name,
+            old_stock: oldStock,
+            new_stock: qty,
+            unit: bestMatch.unit_type
+          });
+        }
+      });
+
+      return adjustments;
+    }
+
+  })();
+</script>

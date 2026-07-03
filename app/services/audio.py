@@ -95,69 +95,139 @@ def transcribe_and_extract_voice(
         return transcript, extracted_items
 
 
-def process_voice_inventory(
-    db: Session, 
-    tenant_id: int, 
-    file_bytes: bytes, 
-    filename: str
-) -> Tuple[str, List[ExtractedVoiceItem], List[IngredientStockUpdate], List[ExtractedVoiceItem]]:
+import re
+
+def rule_based_extract_items(text: str, ingredient_names: List[str]) -> List[ExtractedVoiceItem]:
     """
-    Coordinates transcription, structures data, matches items to database ingredients,
-    updates stock levels, and writes change logs.
+    A local rule-based regex parser that extracts items, quantities, and units 
+    from text transcription when OpenAI is not available.
     """
-    # Fetch existing master ingredients for the tenant
+    extracted = []
+    # Normalize common commas: e.g. "Dal, 5 kg" -> "Dal 5 kg"
+    text_clean = re.sub(r',\s*(\d)', r' \1', text)
+    # Split by semicolons, "and", "then", or newlines
+    phrases = re.split(r'[;\n]|(?:\band\b)|(?:\bthen\b)', text_clean, flags=re.IGNORECASE)
+    
+    common_units = {
+        'bags', 'boxes', 'kg', 'blocks', 'packets', 'units', 'ltr', 'liters', 
+        'grams', 'g', 'kg.', 'bag', 'box', 'packet', 'kg', 'liter', 'liters', 'l'
+    }
+    
+    for phrase in phrases:
+        phrase = phrase.strip()
+        if not phrase:
+            continue
+            
+        # Search for first number (integer or float)
+        num_match = re.search(r'(\d+(?:\.\d+)?)', phrase)
+        if not num_match:
+            continue
+            
+        qty = float(num_match.group(1))
+        
+        # Split phrase around the number
+        parts = phrase.split(num_match.group(0))
+        left_text = parts[0].strip()
+        right_text = parts[1].strip() if len(parts) > 1 else ""
+        
+        item_token = ""
+        unit_token = "units"
+        
+        # Check if right text starts with a unit
+        words_right = right_text.split()
+        starts_with_unit = False
+        if words_right:
+            first_word = words_right[0].lower().rstrip('s').rstrip('.')
+            if first_word in common_units or first_word in {'kg', 'g', 'l', 'ml'}:
+                starts_with_unit = True
+                
+        # If left is empty, or only filler words, or right starts with a unit:
+        # e.g., "5 bags of Rice" or "I have 10 kg Dal"
+        left_clean = left_text.lower().strip()
+        is_filler_left = left_clean in {'', 'i have', 'we have', 'there is', 'there are', 'please set', 'update', 'set', 'add'}
+        
+        if is_filler_left or starts_with_unit:
+            right_clean = re.sub(r'^of\s+', '', right_text, flags=re.IGNORECASE).strip()
+            words = right_clean.split()
+            if words:
+                first_word = words[0].lower().rstrip('s').rstrip('.')
+                if first_word in common_units or first_word in {'kg', 'g', 'l', 'ml'}:
+                    unit_token = words[0]
+                    item_token = " ".join(words[1:])
+                    if item_token.lower().startswith("of "):
+                        item_token = item_token[3:].strip()
+                else:
+                    item_token = " ".join(words)
+        else:
+            # E.g. "Rice 10 bags"
+            item_token = left_text
+            # Strip verb prefix
+            item_token = re.sub(r'^(set|update|add|change|reset)\s+', '', item_token, flags=re.IGNORECASE).strip()
+            item_token = re.sub(r'\s+to$', '', item_token, flags=re.IGNORECASE).strip()
+            if words_right:
+                unit_token = words_right[0]
+                
+        item_token = item_token.strip()
+        if item_token:
+            extracted.append(
+                ExtractedVoiceItem(
+                    item_name=item_token,
+                    quantity=qty,
+                    unit=unit_token
+                )
+            )
+            
+    return extracted
+
+
+def apply_extracted_counts_to_db(
+    db: Session,
+    tenant_id: int,
+    extracted_items: List[ExtractedVoiceItem],
+    source: str = "voice_inventory"
+) -> Tuple[List[IngredientStockUpdate], List[ExtractedVoiceItem]]:
+    """
+    Core matching and stock update logic. Takes extracted counts, maps them to database
+    ingredients via fuzzy matching, updates current stocks, logs changes, and syncs to Google Sheets.
+    """
     ingredients = db.query(MasterIngredient).filter(MasterIngredient.tenant_id == tenant_id).all()
     ingredient_names = [ing.item_name for ing in ingredients]
-    
-    # 1. Run Speech-to-Text and GPT parsing
-    transcript, extracted_items = transcribe_and_extract_voice(file_bytes, filename, ingredient_names)
     
     updated_ingredients = []
     unmapped_items = []
     
-    # 2. Vector/Fuzzy Match Engine
     for ext_item in extracted_items:
         if not ingredient_names:
             unmapped_items.append(ext_item)
             continue
             
-        # Clean string for matching
         clean_ext_name = fuzz_utils.default_process(ext_item.item_name)
         
-        # Extract best match with RapidFuzz
         match_result = process.extractOne(
             clean_ext_name,
             ingredient_names,
             processor=fuzz_utils.default_process
         )
         
-        # If score is > 65%, consider it a match
         if match_result and match_result[1] >= 65.0:
             matched_name = match_result[0]
             matched_ing = next(ing for ing in ingredients if ing.item_name == matched_name)
             
-            # Record current stock level
             old_stock = matched_ing.current_stock
-            
-            # Update current stock level (setting the count)
-            # Alternatively we could add, but inventory counts usually represent the final physical counts.
             matched_ing.current_stock = ext_item.quantity
             db.add(matched_ing)
             
-            # Sync stock change to Google Sheet
             from .sheets import update_sheet_ingredient_stock
             update_sheet_ingredient_stock(matched_ing.SKU_code, matched_ing.current_stock)
             
-            # Log stock change history
             qty_changed = ext_item.quantity - old_stock
             history_log = StockHistoryLog(
                 master_ingredient_id=matched_ing.id,
                 quantity_changed=qty_changed,
-                change_source="voice_inventory"
+                change_source=source
             )
             db.add(history_log)
             
-            # Push details to updated list
             updated_ingredients.append(
                 IngredientStockUpdate(
                     ingredient_id=matched_ing.id,
@@ -171,4 +241,61 @@ def process_voice_inventory(
             unmapped_items.append(ext_item)
             
     db.commit()
-    return transcript, extracted_items, updated_ingredients, unmapped_items
+    return updated_ingredients, unmapped_items
+
+
+def process_voice_inventory(
+    db: Session, 
+    tenant_id: int, 
+    file_bytes: bytes, 
+    filename: str
+) -> Tuple[str, List[ExtractedVoiceItem], List[IngredientStockUpdate], List[ExtractedVoiceItem]]:
+    """
+    Coordinates transcription, structures data, matches items to database ingredients,
+    updates stock levels, and writes change logs.
+    """
+    ingredients = db.query(MasterIngredient).filter(MasterIngredient.tenant_id == tenant_id).all()
+    ingredient_names = [ing.item_name for ing in ingredients]
+    
+    transcript, extracted_items = transcribe_and_extract_voice(file_bytes, filename, ingredient_names)
+    updated, unmapped = apply_extracted_counts_to_db(db, tenant_id, extracted_items, "voice_inventory")
+    return transcript, extracted_items, updated, unmapped
+
+
+def process_voice_text_inventory(
+    db: Session,
+    tenant_id: int,
+    text: str
+) -> Tuple[str, List[ExtractedVoiceItem], List[IngredientStockUpdate], List[ExtractedVoiceItem]]:
+    """
+    Processes raw text counts (from web speech recognition or type input).
+    """
+    ingredients = db.query(MasterIngredient).filter(MasterIngredient.tenant_id == tenant_id).all()
+    ingredient_names = [ing.item_name for ing in ingredients]
+    
+    extracted_items = []
+    if not is_mock_openai:
+        try:
+            system_prompt = (
+                "You are an expert restaurant inventory AI. Extract list items, quantities, "
+                "and units from the transcription text. Output the result in structured JSON format "
+                "complying with the schema: List of items with fields: item_name (string), quantity (float), unit (string)."
+            )
+            
+            response = openai_client.beta.chat.completions.parse(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Transcription text to extract: {text}"}
+                ],
+                response_format=List[ExtractedVoiceItem]
+            )
+            extracted_items = response.choices[0].message.parsed
+        except Exception as e:
+            logger.error(f"OpenAI text parse failed: {e}. Falling back to regex.")
+            extracted_items = rule_based_extract_items(text, ingredient_names)
+    else:
+        extracted_items = rule_based_extract_items(text, ingredient_names)
+        
+    updated, unmapped = apply_extracted_counts_to_db(db, tenant_id, extracted_items, "voice_inventory")
+    return text, extracted_items, updated, unmapped

@@ -92,6 +92,16 @@ class TestRestoKeeperAPI(unittest.TestCase):
 
     def test_create_ingredient(self):
         """Test creating a custom ingredient."""
+        # Clean up existing test ingredient to make the test idempotent
+        from app.database import SessionLocal
+        from app.models import MasterIngredient
+        db = SessionLocal()
+        try:
+            db.query(MasterIngredient).filter(MasterIngredient.SKU_code == "SKU-AVO-99").delete()
+            db.commit()
+        finally:
+            db.close()
+
         payload = {
             "SKU_code": "SKU-AVO-99",
             "item_name": "Avocado",

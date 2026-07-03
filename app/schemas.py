@@ -37,6 +37,14 @@ class IngredientBase(BaseModel):
     cost_per_unit: float
     vendor_name: str
 
+class IngredientUpdatePayload(BaseModel):
+    current_stock: Optional[float] = None
+    item_name: Optional[str] = None
+    safety_par_level: Optional[float] = None
+    unit_type: Optional[str] = None
+    cost_per_unit: Optional[float] = None
+    vendor_name: Optional[str] = None
+
 class IngredientResponse(IngredientBase):
     id: int
     tenant_id: int
@@ -101,3 +109,6 @@ class DraftOrdersResponse(BaseModel):
     critical_stock_alerts: int
     pending_purchase_orders_count: int
     total_waste_saved_estimate: float
+
+class VoiceTextPayload(BaseModel):
+    text: str

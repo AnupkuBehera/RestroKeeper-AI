@@ -7,7 +7,10 @@ from typing import List
 
 from .database import engine, Base, get_db
 from .models import Tenant, User, MasterIngredient, StockHistoryLog
-from .schemas import VoiceUploadResponse, InvoiceUploadResponse, DraftOrdersResponse, IngredientResponse, IngredientBase
+from .schemas import (
+    VoiceUploadResponse, InvoiceUploadResponse, DraftOrdersResponse, 
+    IngredientResponse, IngredientBase, IngredientUpdatePayload, VoiceTextPayload
+)
 from .services.audio import process_voice_inventory
 from .services.vision import process_invoice_ocr
 from .services.procurement import generate_smart_procurement_drafts
@@ -78,57 +81,84 @@ def seed_database_if_empty(db: Session):
         )
         db.add(manager_user)
         db.add(staff_user)
+        db.commit()
+        tenant_id = default_tenant.id
+    else:
+        first_tenant = db.query(Tenant).first()
+        tenant_id = first_tenant.id if first_tenant else 1
 
-        # 3. Create Default Master Ingredients
+    # Check if standard ingredient "Atta" exists, if not, delete old ingredients and re-seed
+    atta_exists = db.query(MasterIngredient).filter(
+        MasterIngredient.tenant_id == tenant_id,
+        MasterIngredient.item_name == "Atta"
+    ).first()
+    
+    if not atta_exists:
+        logger.info("Standard ingredients missing. Seeding Atta, Dal, Rice, etc...")
+        # Clear existing logs and ingredients for a clean reset
+        db.query(StockHistoryLog).delete()
+        db.query(MasterIngredient).filter(MasterIngredient.tenant_id == tenant_id).delete()
+        db.commit()
+        
         default_ingredients = [
             MasterIngredient(
-                tenant_id=default_tenant.id,
-                SKU_code="SKU-ONN-01",
-                item_name="Onions",
-                current_stock=4.0,
-                safety_par_level=10.0,
+                tenant_id=tenant_id,
+                SKU_code="SKU-ATT-01",
+                item_name="Atta",
+                current_stock=2.0,
+                safety_par_level=5.0,
                 unit_type="bags",
-                cost_per_unit=15.00,
-                vendor_name="Fresh Produce Co."
+                cost_per_unit=12.00,
+                vendor_name="Desi Grains Co."
             ),
             MasterIngredient(
-                tenant_id=default_tenant.id,
-                SKU_code="SKU-CHS-02",
-                item_name="Cheddar Cheese",
+                tenant_id=tenant_id,
+                SKU_code="SKU-DAL-02",
+                item_name="Dal",
+                current_stock=8.0,
+                safety_par_level=10.0,
+                unit_type="kg",
+                cost_per_unit=4.50,
+                vendor_name="Desi Grains Co."
+            ),
+            MasterIngredient(
+                tenant_id=tenant_id,
+                SKU_code="SKU-RIC-03",
+                item_name="Rice",
                 current_stock=3.0,
                 safety_par_level=8.0,
-                unit_type="blocks",
-                cost_per_unit=12.00,
-                vendor_name="Sysco"
+                unit_type="bags",
+                cost_per_unit=18.00,
+                vendor_name="Desi Grains Co."
             ),
             MasterIngredient(
-                tenant_id=default_tenant.id,
-                SKU_code="SKU-TMT-03",
-                item_name="Tomato",
-                current_stock=2.0,
-                safety_par_level=12.0,
+                tenant_id=tenant_id,
+                SKU_code="SKU-ONN-04",
+                item_name="Onions",
+                current_stock=18.0,
+                safety_par_level=15.0,
                 unit_type="kg",
-                cost_per_unit=5.00,
+                cost_per_unit=2.50,
                 vendor_name="Fresh Produce Co."
             ),
             MasterIngredient(
-                tenant_id=default_tenant.id,
-                SKU_code="SKU-BFF-04",
-                item_name="Beef Patties",
-                current_stock=22.0,
-                safety_par_level=15.0,
-                unit_type="boxes",
-                cost_per_unit=45.00,
-                vendor_name="Sysco"
+                tenant_id=tenant_id,
+                SKU_code="SKU-POT-05",
+                item_name="Potato",
+                current_stock=12.0,
+                safety_par_level=20.0,
+                unit_type="kg",
+                cost_per_unit=1.80,
+                vendor_name="Fresh Produce Co."
             ),
             MasterIngredient(
-                tenant_id=default_tenant.id,
-                SKU_code="SKU-FLR-05",
-                item_name="Flour",
-                current_stock=6.5,
-                safety_par_level=8.0,
-                unit_type="bags",
-                cost_per_unit=8.50,
+                tenant_id=tenant_id,
+                SKU_code="SKU-SUG-06",
+                item_name="Sugar",
+                current_stock=4.0,
+                safety_par_level=10.0,
+                unit_type="kg",
+                cost_per_unit=3.00,
                 vendor_name="Sysco"
             ),
         ]
@@ -379,57 +409,167 @@ def send_purchase_order(
 def reset_ingredient_stocks(tenant_id: int = Depends(get_current_tenant_id), db: Session = Depends(get_db)):
     """
     Utility endpoint to reset ingredients back to default deficit levels.
-    Enables iterative manual testing of voice and vision flows.
     """
     try:
         # Delete logs
         db.query(StockHistoryLog).delete()
         
-        # Reset master stocks to deficit values
-        onions = db.query(MasterIngredient).filter(
-            MasterIngredient.tenant_id == tenant_id, 
-            MasterIngredient.item_name == "Onions"
-        ).first()
-        if onions:
-            onions.current_stock = 4.0
-            onions.cost_per_unit = 15.00
-            
-        cheese = db.query(MasterIngredient).filter(
-            MasterIngredient.tenant_id == tenant_id, 
-            MasterIngredient.item_name == "Cheddar Cheese"
-        ).first()
-        if cheese:
-            cheese.current_stock = 3.0
-            cheese.cost_per_unit = 12.00
-            
-        tomato = db.query(MasterIngredient).filter(
-            MasterIngredient.tenant_id == tenant_id, 
-            MasterIngredient.item_name == "Tomato"
-        ).first()
-        if tomato:
-            tomato.current_stock = 2.0
-            tomato.cost_per_unit = 5.00
-            
-        beef = db.query(MasterIngredient).filter(
-            MasterIngredient.tenant_id == tenant_id, 
-            MasterIngredient.item_name == "Beef Patties"
-        ).first()
-        if beef:
-            beef.current_stock = 22.0
-            beef.cost_per_unit = 45.00
-            
-        flour = db.query(MasterIngredient).filter(
-            MasterIngredient.tenant_id == tenant_id, 
-            MasterIngredient.item_name == "Flour"
-        ).first()
-        if flour:
-            flour.current_stock = 6.5
-            flour.cost_per_unit = 8.50
+        # Reset master stocks to default values
+        ingredients = db.query(MasterIngredient).filter(MasterIngredient.tenant_id == tenant_id).all()
+        for ing in ingredients:
+            db.delete(ing)
+        db.commit()
+        
+        default_ingredients = [
+            MasterIngredient(
+                tenant_id=tenant_id,
+                SKU_code="SKU-ATT-01",
+                item_name="Atta",
+                current_stock=2.0,
+                safety_par_level=5.0,
+                unit_type="bags",
+                cost_per_unit=12.00,
+                vendor_name="Desi Grains Co."
+            ),
+            MasterIngredient(
+                tenant_id=tenant_id,
+                SKU_code="SKU-DAL-02",
+                item_name="Dal",
+                current_stock=8.0,
+                safety_par_level=10.0,
+                unit_type="kg",
+                cost_per_unit=4.50,
+                vendor_name="Desi Grains Co."
+            ),
+            MasterIngredient(
+                tenant_id=tenant_id,
+                SKU_code="SKU-RIC-03",
+                item_name="Rice",
+                current_stock=3.0,
+                safety_par_level=8.0,
+                unit_type="bags",
+                cost_per_unit=18.00,
+                vendor_name="Desi Grains Co."
+            ),
+            MasterIngredient(
+                tenant_id=tenant_id,
+                SKU_code="SKU-ONN-04",
+                item_name="Onions",
+                current_stock=18.0,
+                safety_par_level=15.0,
+                unit_type="kg",
+                cost_per_unit=2.50,
+                vendor_name="Fresh Produce Co."
+            ),
+            MasterIngredient(
+                tenant_id=tenant_id,
+                SKU_code="SKU-POT-05",
+                item_name="Potato",
+                current_stock=12.0,
+                safety_par_level=20.0,
+                unit_type="kg",
+                cost_per_unit=1.80,
+                vendor_name="Fresh Produce Co."
+            ),
+            MasterIngredient(
+                tenant_id=tenant_id,
+                SKU_code="SKU-SUG-06",
+                item_name="Sugar",
+                current_stock=4.0,
+                safety_par_level=10.0,
+                unit_type="kg",
+                cost_per_unit=3.00,
+                vendor_name="Sysco"
+            ),
+        ]
+        
+        for ing in default_ingredients:
+            db.add(ing)
+            # Sync to sheet
+            update_sheet_ingredient_stock(ing.SKU_code, ing.current_stock)
             
         db.commit()
-        return {"status": "success", "message": "Stocks reset to initial default deficit values."}
+        return {"status": "success", "message": "Stocks reset to initial default values."}
     except Exception as e:
         logger.error(f"Reset stock levels failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/ingredients/{ingredient_id}", response_model=IngredientResponse)
+def update_ingredient(
+    ingredient_id: int,
+    payload: IngredientUpdatePayload,
+    tenant_id: int = Depends(get_current_tenant_id),
+    db: Session = Depends(get_db)
+):
+    """Update an ingredient's properties and sync to Google Sheets."""
+    ing = db.query(MasterIngredient).filter(
+        MasterIngredient.id == ingredient_id,
+        MasterIngredient.tenant_id == tenant_id
+    ).first()
+    if not ing:
+        raise HTTPException(status_code=404, detail="Ingredient not found")
+        
+    old_stock = ing.current_stock
+    
+    if payload.current_stock is not None:
+        ing.current_stock = payload.current_stock
+    if payload.item_name is not None:
+        ing.item_name = payload.item_name
+    if payload.safety_par_level is not None:
+        ing.safety_par_level = payload.safety_par_level
+    if payload.unit_type is not None:
+        ing.unit_type = payload.unit_type
+    if payload.cost_per_unit is not None:
+        ing.cost_per_unit = payload.cost_per_unit
+    if payload.vendor_name is not None:
+        ing.vendor_name = payload.vendor_name
+        
+    db.commit()
+    db.refresh(ing)
+    
+    # Log stock history if stock changed
+    if payload.current_stock is not None and payload.current_stock != old_stock:
+        qty_changed = payload.current_stock - old_stock
+        history_log = StockHistoryLog(
+            master_ingredient_id=ing.id,
+            quantity_changed=qty_changed,
+            change_source="manual_input"
+        )
+        db.add(history_log)
+        db.commit()
+        
+        # Sync stock update to Google Sheet
+        update_sheet_ingredient_stock(ing.SKU_code, ing.current_stock)
+        
+    return ing
+
+
+@app.post("/api/inventory/voice-text-upload", response_model=VoiceUploadResponse)
+def process_voice_text_endpoint(
+    payload: VoiceTextPayload,
+    tenant_id: int = Depends(get_current_tenant_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Accepts text transcription, parses counts (regex fallback or OpenAI), 
+    updates SQL DB and Google Sheets.
+    """
+    try:
+        from .services.audio import process_voice_text_inventory
+        transcript, extracted_items, updated_ingredients, unmapped_items = process_voice_text_inventory(
+            db=db,
+            tenant_id=tenant_id,
+            text=payload.text
+        )
+        return VoiceUploadResponse(
+            transcript=transcript,
+            extracted_items=extracted_items,
+            updated_ingredients=updated_ingredients,
+            unmapped_items=unmapped_items
+        )
+    except Exception as e:
+        logger.error(f"Voice text process error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Duplicate /api routes to support Vercel serverless prefix stripping
