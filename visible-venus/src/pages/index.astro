@@ -959,7 +959,10 @@ import Layout from '../layouts/Layout.astro';
         try {
           const res = await fetch(`${BACKEND_BASE_URL}/api/ingredients/${id}`, {
             method: 'PUT',
-            headers: getHeaders(),
+            headers: {
+              'Content-Type': 'application/json',
+              ...getHeaders()
+            },
             body: JSON.stringify({ current_stock: stock })
           });
           if (res.ok) {
@@ -1280,7 +1283,10 @@ import Layout from '../layouts/Layout.astro';
         try {
           const res = await fetch(`${BACKEND_BASE_URL}/api/inventory/voice-text-upload`, {
             method: 'POST',
-            headers: getHeaders(),
+            headers: {
+              'Content-Type': 'application/json',
+              ...getHeaders()
+            },
             body: JSON.stringify({ text })
           });
 

@@ -52,6 +52,19 @@ class TestRestoKeeperAPI(unittest.TestCase):
         self.assertIn("extracted_items", json_data)
         self.assertIn("updated_ingredients", json_data)
 
+    def test_voice_text_upload(self):
+        """Test direct voice text sync parsing and updating."""
+        payload = {
+            "text": "Atta 5 bags, Dal 10 kg"
+        }
+        response = self.client.post("/api/inventory/voice-text-upload", json=payload, headers={"X-Tenant-ID": "1"})
+        self.assertEqual(response.status_code, 200)
+        json_data = response.json()
+        self.assertIn("transcript", json_data)
+        self.assertEqual(json_data["transcript"], "Atta 5 bags, Dal 10 kg")
+        self.assertIn("extracted_items", json_data)
+        self.assertIn("updated_ingredients", json_data)
+
     def test_invoice_ocr(self):
         """Test invoice uploading OCR, pricing audits and headers."""
         files = {
