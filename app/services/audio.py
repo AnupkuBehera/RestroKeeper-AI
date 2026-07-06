@@ -105,8 +105,8 @@ def rule_based_extract_items(text: str, ingredient_names: List[str]) -> List[Ext
     extracted = []
     # Normalize common commas: e.g. "Dal, 5 kg" -> "Dal 5 kg"
     text_clean = re.sub(r',\s*(\d)', r' \1', text)
-    # Split by semicolons, "and", "then", or newlines
-    phrases = re.split(r'[;\n]|(?:\band\b)|(?:\bthen\b)', text_clean, flags=re.IGNORECASE)
+    # Split by semicolons, commas, newlines, "and", "then"
+    phrases = re.split(r'[,;\n]|(?:\band\b)|(?:\bthen\b)', text_clean, flags=re.IGNORECASE)
     
     common_units = {
         'bags', 'boxes', 'kg', 'blocks', 'packets', 'units', 'ltr', 'liters', 
@@ -126,27 +126,31 @@ def rule_based_extract_items(text: str, ingredient_names: List[str]) -> List[Ext
         qty = float(num_match.group(1))
         
         # Split phrase around the number
-        parts = phrase.split(num_match.group(0))
+        parts = phrase.split(num_match.group(0), 1)
         left_text = parts[0].strip()
         right_text = parts[1].strip() if len(parts) > 1 else ""
+        
+        left_clean = left_text.lower().strip()
+        # Strip verb prefixes or other common fillers to check if we have a valid item name on the left
+        left_words_clean = re.sub(r'^(set|update|add|change|reset|i have|we have|there is|there are|please set)\s+', '', left_clean, flags=re.IGNORECASE).strip()
+        left_words_clean = re.sub(r'\s+to$', '', left_words_clean, flags=re.IGNORECASE).strip()
         
         item_token = ""
         unit_token = "units"
         
-        # Check if right text starts with a unit
-        words_right = right_text.split()
-        starts_with_unit = False
-        if words_right:
-            first_word = words_right[0].lower().rstrip('s').rstrip('.')
-            if first_word in common_units or first_word in {'kg', 'g', 'l', 'ml'}:
-                starts_with_unit = True
-                
-        # If left is empty, or only filler words, or right starts with a unit:
-        # e.g., "5 bags of Rice" or "I have 10 kg Dal"
-        left_clean = left_text.lower().strip()
-        is_filler_left = left_clean in {'', 'i have', 'we have', 'there is', 'there are', 'please set', 'update', 'set', 'add'}
-        
-        if is_filler_left or starts_with_unit:
+        # Check if left text has a valid item name
+        if left_words_clean and left_words_clean not in {'of', 'the'}:
+            item_token = left_text
+            item_token = re.sub(r'^(set|update|add|change|reset|i have|we have|there is|there are|please set)\s+', '', item_token, flags=re.IGNORECASE).strip()
+            item_token = re.sub(r'\s+to$', '', item_token, flags=re.IGNORECASE).strip()
+            
+            words_right = right_text.split()
+            if words_right:
+                first_word = words_right[0].lower().rstrip('s').rstrip('.')
+                if first_word in common_units or first_word in {'kg', 'g', 'l', 'ml'}:
+                    unit_token = words_right[0]
+        else:
+            # e.g., "5 bags of Rice" or "10 kg Dal"
             right_clean = re.sub(r'^of\s+', '', right_text, flags=re.IGNORECASE).strip()
             words = right_clean.split()
             if words:
@@ -158,14 +162,6 @@ def rule_based_extract_items(text: str, ingredient_names: List[str]) -> List[Ext
                         item_token = item_token[3:].strip()
                 else:
                     item_token = " ".join(words)
-        else:
-            # E.g. "Rice 10 bags"
-            item_token = left_text
-            # Strip verb prefix
-            item_token = re.sub(r'^(set|update|add|change|reset)\s+', '', item_token, flags=re.IGNORECASE).strip()
-            item_token = re.sub(r'\s+to$', '', item_token, flags=re.IGNORECASE).strip()
-            if words_right:
-                unit_token = words_right[0]
                 
         item_token = item_token.strip()
         if item_token:

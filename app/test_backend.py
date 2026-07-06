@@ -62,8 +62,11 @@ class TestRestoKeeperAPI(unittest.TestCase):
         json_data = response.json()
         self.assertIn("transcript", json_data)
         self.assertEqual(json_data["transcript"], "Atta 5 bags, Dal 10 kg")
-        self.assertIn("extracted_items", json_data)
-        self.assertIn("updated_ingredients", json_data)
+        self.assertEqual(len(json_data["extracted_items"]), 2)
+        self.assertEqual(len(json_data["updated_ingredients"]), 2)
+        item_names = [x["item_name"] for x in json_data["updated_ingredients"]]
+        self.assertIn("Atta", item_names)
+        self.assertIn("Dal", item_names)
 
     def test_invoice_ocr(self):
         """Test invoice uploading OCR, pricing audits and headers."""
