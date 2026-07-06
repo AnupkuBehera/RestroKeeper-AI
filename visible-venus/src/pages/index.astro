@@ -971,7 +971,14 @@ import Layout from '../layouts/Layout.astro';
             showToast(`Updated ${item.item_name} stock to ${stock}`);
             await refreshData();
           } else {
-            showToast('Failed to sync stock updates', 'error');
+            let errorMsg = 'Failed to sync stock updates';
+            try {
+              const errData = await res.json();
+              if (errData && errData.detail) {
+                errorMsg = `Failed to sync stock: ${errData.detail}`;
+              }
+            } catch (_) {}
+            showToast(errorMsg, 'error');
           }
         } catch (e) {
           console.error(e);
@@ -1312,7 +1319,14 @@ import Layout from '../layouts/Layout.astro';
             }
             await refreshData();
           } else {
-            showToast('Voice sync failed on backend', 'error');
+            let errorMsg = 'Voice sync failed on backend';
+            try {
+              const errData = await res.json();
+              if (errData && errData.detail) {
+                errorMsg = `Voice sync failed: ${errData.detail}`;
+              }
+            } catch (_) {}
+            showToast(errorMsg, 'error');
           }
         } catch (e) {
           console.error(e);
